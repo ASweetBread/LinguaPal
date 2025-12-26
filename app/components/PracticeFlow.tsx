@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useMemo, useState } from 'react'
-import { useAppStore } from '../store'
+import { useDialogueStore } from '@/app/store/dialogueStore'
 import {
   markDifferencesByWord,
   isInputCorrect,
@@ -15,7 +15,7 @@ type Task = {
 
 
 export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
-  const { dialogue } = useAppStore()
+  const { dialogue } = useDialogueStore()
 
   // 本组件本地维护练习状态，避免使用全局store
   const [localPracticeStates, setLocalPracticeStates] = useState<Record<number, { passed: boolean | null; recognizedText: string }>>({})

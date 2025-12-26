@@ -1,6 +1,6 @@
 'use client'
 import React, { useRef, useEffect, useState } from 'react'
-import { useAppStore } from '../store'
+import { useDialogueStore, useUserConfigStore } from '@/app/store'
 import { recognizeSpeech as recognizeSpeechApi } from '../lib/apiCalls';
 import useRecord from '../lib/hooks/useRecord';
 import PracticeFlow from './PracticeFlow'
@@ -11,7 +11,7 @@ export default function DialogueDisplay() {
     dialogue, 
     currentSentenceIndex, 
     setCurrentSentenceIndex
-  } = useAppStore()
+  } = useDialogueStore()
   
   const audioRef = useRef<HTMLAudioElement>(null)
   
@@ -113,8 +113,8 @@ export default function DialogueDisplay() {
   const playOriginalSentence = (english: string) => {
     if (typeof window === 'undefined') return
 
-    const { config } = useAppStore()
-    const { ttsService } = config.aiServices
+    const { aiServices } = useUserConfigStore()
+    const { ttsService } = aiServices
 
     // 根据配置的TTS服务选择不同的实现
     if (ttsService === 'browser' || !ttsService) {

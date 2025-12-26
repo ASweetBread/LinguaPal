@@ -1,16 +1,16 @@
 'use client';
 import Link from 'next/link';
 import { useState } from 'react';
-import Modal from './ui/Modal';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogOverlay } from '@/components/ui/dialog';
 import RecordingTester from './RecordingTester';
-import { useAppStore } from '../store';
+import { useAppConfigStore } from '@/app/store';
 
 /**
  * 导航栏组件，包含录音测试弹窗功能
  */
 export default function NavBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { config, toggleTheme } = useAppStore();
+  const { theme, toggleTheme } = useAppConfigStore();
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -37,7 +37,7 @@ export default function NavBar() {
                 className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white p-2 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                 aria-label="切换主题"
               >
-                {config.theme === 'light' ? (
+                {theme === 'light' ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                   </svg>
@@ -88,13 +88,15 @@ export default function NavBar() {
       </header>
       
       {/* 录音测试弹窗 */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        title="录音功能测试"
-      >
-        <RecordingTester onClose={closeModal} />
-      </Modal>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogOverlay />
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>录音功能测试</DialogTitle>
+          </DialogHeader>
+          <RecordingTester onClose={() => setIsModalOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

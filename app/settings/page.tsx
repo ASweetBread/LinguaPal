@@ -1,7 +1,8 @@
 'use client'
 import React from 'react';
-import { useAppStore } from '../store';
+import { useUserConfigStore } from '../store';
 import NavBar from '../components/NavBar';
+import { LEARNING_MODES, LearningMode } from '@/config/app';
 
 // 定义底部状态栏组件
 function BottomStatusBar() {
@@ -13,11 +14,11 @@ function BottomStatusBar() {
 }
 
 const SettingsPage = () => {
-  const { config, updateConfig, updateAIServices } = useAppStore();
+  const { mode, updateMode, aiServices, updateAIServices } = useUserConfigStore();
 
   // 更新模式
-  const handleModeChange = (mode: 'normal' | 'prompt') => {
-    updateConfig({ mode });
+  const handleModeChange = (newMode: LearningMode) => {
+    updateMode(newMode);
   };
 
   // 更新AI服务
@@ -40,9 +41,9 @@ const SettingsPage = () => {
                 <input
                   type="radio"
                   name="mode"
-                  value="normal"
-                  checked={config.mode === 'normal'}
-                  onChange={() => handleModeChange('normal')}
+                  value={LEARNING_MODES.NORMAL}
+                  checked={mode === LEARNING_MODES.NORMAL}
+                  onChange={() => handleModeChange(LEARNING_MODES.NORMAL)}
                   className="text-blue-600 dark:text-blue-400"
                 />
                 <span className="text-gray-700 dark:text-gray-300">正常模式</span>
@@ -51,9 +52,9 @@ const SettingsPage = () => {
                 <input
                   type="radio"
                   name="mode"
-                  value="prompt"
-                  checked={config.mode === 'prompt'}
-                  onChange={() => handleModeChange('prompt')}
+                  value={LEARNING_MODES.PROMPT}
+                  checked={mode === LEARNING_MODES.PROMPT}
+                  onChange={() => handleModeChange(LEARNING_MODES.PROMPT)}
                   className="text-blue-600 dark:text-blue-400"
                 />
                 <span className="text-gray-700 dark:text-gray-300">提示词模式</span>
@@ -74,7 +75,7 @@ const SettingsPage = () => {
                 文本对话AI服务
               </label>
               <select
-                value={config.aiServices.textAI}
+                value={aiServices.textAI}
                 onChange={(e) => handleAIServiceChange('textAI', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -90,7 +91,7 @@ const SettingsPage = () => {
                 语音识别(ASR)服务
               </label>
               <select
-                value={config.aiServices.asrService}
+                value={aiServices.asrService}
                 onChange={(e) => handleAIServiceChange('asrService', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
@@ -106,7 +107,7 @@ const SettingsPage = () => {
                 语音合成(TTS)服务
               </label>
               <select
-                value={config.aiServices.ttsService}
+                value={aiServices.ttsService}
                 onChange={(e) => handleAIServiceChange('ttsService', e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >

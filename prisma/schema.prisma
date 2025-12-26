@@ -1,0 +1,160 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  Int       @id @default(autoincrement())
+  username            String    @unique
+  password            String
+  currentLevel        String?   @default("A1")
+  dailyGoal           Int       @default(5)
+  createdAt           DateTime  @default(now())
+  lastLoginAt         DateTime?
+  totalStudyMinutes   Int       @default(0)
+  vocabularyAbility   String?
+  
+  keywords     Keyword[]
+  errorRecords ErrorRecord[]
+  words        Word[]
+  phrases      Phrase[]
+  phraseMeanings PhraseMeaning[]
+  learningStats LearningStat[]
+  reviewDetails TodayReviewDetail[]
+  
+  @@map("users")
+}
+
+model Keyword {
+  id        Int    @id @default(autoincrement())
+  name      String
+  userId    Int
+  
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, name])
+  @@map("keywords")
+}
+
+model ErrorRecord {
+  id                Int      @id @default(autoincrement())
+  userId            Int
+  phraseMeaningId   Int?
+  errorType         String
+  occurredAt        DateTime @default(now())
+  originalSentence  String
+  correctSentence   String
+  severityLevel     Int      @default(1)
+  
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phraseMeaning PhraseMeaning? @relation(fields: [phraseMeaningId], references: [id], onDelete: SetNull)
+  
+  @@index([userId, occurredAt])
+  @@map("error_records")
+}
+
+model Word {
+  id              Int     @id @default(autoincrement())
+  word            String
+  phonetic        String?
+  meanings        String  // 存储含义（后续可改为JSON）
+  partOfSpeech    String?
+  difficultyLevel String?
+  userId          Int
+  learnedAt       DateTime @default(now())
+  
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  relations  WordPhraseRelation[]
+  
+  @@unique([userId, word])
+  @@map("words")
+}
+
+model Phrase {
+  id        Int     @id @default(autoincrement())
+  phrase    String
+  userId    Int
+  learnedAt DateTime @default(now())
+  
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phraseMeanings PhraseMeaning[]
+  relations      WordPhraseRelation[]
+  reviewDetails TodayReviewDetail[]
+  
+  @@unique([userId, phrase])
+  @@map("phrases")
+}
+
+model PhraseMeaning {
+  id                  Int      @id @default(autoincrement())
+  meaning             String
+  contextKeyword      String
+  phraseId            Int
+  userId              Int
+  firstLearnedAt      DateTime @default(now())
+  
+  // 掌握状态
+  masteryLevel        Int      @default(0)
+  lastPracticedAt     DateTime?
+  totalPracticeCount  Int      @default(0)
+  errorCount          Int      @default(0)
+  consecutiveCorrect  Int      @default(0)
+  
+  // 复习计划
+  nextReviewAt        DateTime @default(now())
+  currentIntervalDays Int      @default(1)
+  reviewRound         Int      @default(0)
+  
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase        Phrase             @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  errorRecords  ErrorRecord[]
+  
+  @@unique([userId, phraseId, meaning])
+  @@index([userId, nextReviewAt])
+  @@map("phrase_meanings")
+}
+
+model WordPhraseRelation {
+  id        Int    @id @default(autoincrement())
+  wordId    Int
+  phraseId  Int
+  
+  word   Word   @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  phrase Phrase @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  
+  @@unique([wordId, phraseId])
+  @@map("word_phrase_relations")
+}
+
+model LearningStat {
+  id                      Int      @id @default(autoincrement())
+  userId                  Int
+  statDate                DateTime @default(now())
+  phrasesLearnedCount     Int      @default(0)
+  phrasesToReviewCount    Int      @default(0)
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, statDate])
+  @@map("learning_stats")
+}
+
+model TodayReviewDetail {
+  id               Int       @id @default(autoincrement())
+  userId           Int
+  phraseId         Int  // 关联短语ID（不是短语含义ID）
+  scheduledAt      DateTime
+  reviewedAt       DateTime?
+  status           String    @default("pending")
+  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase Phrase @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, status, scheduledAt])
+  @@map("today_review_details")
+}

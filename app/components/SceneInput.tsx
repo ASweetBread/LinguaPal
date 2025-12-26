@@ -1,13 +1,15 @@
 'use client'
 import React, { useState } from 'react'
-import { useAppStore } from '../store'
+import { useDialogueStore, useUserConfigStore } from '@/app/store'
 import { generateDialogue } from '../lib/apiCalls';
+import { generateDialoguePrompt } from '../lib/prompts/generatePrompt';
 
 export default function SceneInput() {
   const [scene, setScene] = useState('')
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
-  const { setDialogue, setIsLoading, isLoading, config } = useAppStore()
+  const { setDialogue, setIsLoading, isLoading } = useDialogueStore()
+  const { mode, aiServices } = useUserConfigStore()
 
   const handleGenerateDialogue = async () => {
     if (!scene.trim()) {
@@ -21,16 +23,16 @@ export default function SceneInput() {
       setDialogue([])
       setUserDialogueInput('')
       
-      const data = await generateDialogue(scene.trim(), config.mode, config.aiServices.textAI)
-
-      console.log('生成的结果:', data)
-      
-      if (config.mode === 'prompt') {
-        // 提示词模式：显示提示词，让用户手动输入对话
-        if (data.prompt) {
-          setPrompt(data.prompt)
-        }
+      if (mode === 'prompt') {
+        // 提示词模式：直接在客户端生成提示词，不调用后端API
+        const generatedPrompt = generateDialoguePrompt(scene.trim())
+        setPrompt(generatedPrompt)
       } else {
+        // 正常模式：调用后端API生成对话
+        const data = await generateDialogue(scene.trim(), mode, aiServices.textAI)
+
+        console.log('生成的结果:', data)
+        
         // 正常模式：直接设置对话
         if (data.dialogue) {
           setDialogue(data.dialogue)
@@ -88,7 +90,7 @@ export default function SceneInput() {
       </div>
 
       {/* 提示词模式下的提示词显示和对话输入 */}
-      {config.mode === 'prompt' && prompt && (
+      {mode === 'prompt' && prompt && (
         <div className="mt-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">提示词</h3>
           <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-3 mb-4 overflow-x-auto">
