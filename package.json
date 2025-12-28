@@ -7,22 +7,20 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:restart": "docker-compose restart",
     "docker:logs": "docker-compose logs -f",
-    
     "db:start": "npm run docker:up && sleep 5 && npx prisma db push",
     "db:stop": "npm run docker:down",
     "db:reset": "docker-compose down -v && npm run db:start",
-    
     "studio": "npx prisma studio"
   },
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@prisma/client": "6.19.1",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-toast": "^1.2.15",
@@ -36,6 +34,7 @@
     "lucide-react": "^0.555.0",
     "next": "^14.2.3",
     "node-wav": "^0.0.2",
+    "prisma": "6.19.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "tailwind-merge": "^3.4.0",

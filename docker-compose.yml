@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: vocabulary_db  # 默认创建的数据库
     volumes:
       - postgres_data:/var/lib/postgresql/data  # 持久化数据
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 初始化脚本（可选）
+      # - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 初始化脚本（可选）
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vocabulary_user"]
       interval: 30s
