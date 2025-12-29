@@ -1,12 +1,10 @@
 'use client'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import { useEffect } from 'react'
 import { useAppConfigStore } from '@/app/store'
 import { Toaster } from '@/components/ui/toaster'
 
-const inter = Inter({ subsets: ['latin'] })
 
 const metadata: Metadata = {
   title: 'LinguaPal',
@@ -31,7 +29,7 @@ export default function RootLayout({
 
   return (
     <html lang="zh-CN" className={theme === 'dark' ? 'dark' : ''}>
-      <body className={inter.className}>
+      <body>
         {children}
         <Toaster />
       </body>

@@ -12,6 +12,7 @@
     "docker:restart": "docker-compose restart",
     "docker:logs": "docker-compose logs -f",
     "db:start": "npm run docker:up && sleep 5 && npx prisma db push",
+    "db:migrate": "npx prisma migrate dev",
     "db:stop": "npm run docker:down",
     "db:reset": "docker-compose down -v && npm run db:start",
     "studio": "npx prisma studio"
