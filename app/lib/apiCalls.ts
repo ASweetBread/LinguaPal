@@ -1,13 +1,19 @@
 import clientFetch from './clientApi';
 
 // 生成对话的API封装
-export async function generateDialogue(scene: string, mode: 'normal' | 'prompt' = 'normal', aiService?: string) {
+export async function generateDialogue(
+  scene: string, 
+  mode: 'normal' | 'prompt' = 'normal', 
+  aiService?: string,
+  dialogueConfig?: { newWordRatio: number; familiarWordLevel: number },
+  userId?: string
+) {
   return clientFetch('/api/generate-dialogue', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ scene, mode, aiService }),
+    body: JSON.stringify({ scene, mode, aiService, dialogueConfig, userId }),
     name: 'generate-dialogue-client',
   });
 }

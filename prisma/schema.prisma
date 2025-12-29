@@ -32,14 +32,23 @@ model User {
 }
 
 model Config {
-  id        Int    @id @default(autoincrement())
-  userId    Int    @unique
-  key       String
-  value     String
+  id                      Int    @id @default(autoincrement())
+  userId                  Int    @unique
   
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 学习模式
+  mode                    String @default("normal")
   
-  @@unique([userId, key])
+  // AI服务配置
+  aiTextService           String @default("")
+  aiAsrService            String @default("")
+  aiTtsService            String @default("")
+  
+  // 对话生成配置
+  dialogueNewWordRatio    Int    @default(30)
+  dialogueFamiliarWordLevel Int @default(3)
+  
+  user                    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   @@map("configs")
 }
 

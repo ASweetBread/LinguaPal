@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { useDialogueStore, useUserConfigStore } from '@/app/store'
+import { useDialogueStore, useUserConfigStore, useVocabularyStore } from '@/app/store'
 import { generateDialogue } from '../lib/apiCalls';
 import { generateDialoguePrompt } from '../lib/prompts/generatePrompt';
 
@@ -9,7 +9,8 @@ export default function SceneInput() {
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
   const { setDialogue, setIsLoading, isLoading } = useDialogueStore()
-  const { mode, aiServices } = useUserConfigStore()
+  const { mode, aiServices, dialogueConfig, userId } = useUserConfigStore()
+  const { vocabulary } = useVocabularyStore()
 
   const handleGenerateDialogue = async () => {
     if (!scene.trim()) {
@@ -25,11 +26,23 @@ export default function SceneInput() {
       
       if (mode === 'prompt') {
         // 提示词模式：直接在客户端生成提示词，不调用后端API
-        const generatedPrompt = generateDialoguePrompt(scene.trim())
+        const vocabularyJson = JSON.stringify(vocabulary)
+        const generatedPrompt = generateDialoguePrompt(
+          scene.trim(),
+          dialogueConfig.newWordRatio.toString(),
+          dialogueConfig.familiarWordLevel,
+          vocabularyJson
+        )
         setPrompt(generatedPrompt)
       } else {
         // 正常模式：调用后端API生成对话
-        const data = await generateDialogue(scene.trim(), mode, aiServices.textAI)
+        const data = await generateDialogue(
+          scene.trim(), 
+          mode, 
+          aiServices.textAI,
+          dialogueConfig,
+          userId
+        )
 
         console.log('生成的结果:', data)
         

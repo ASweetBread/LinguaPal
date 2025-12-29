@@ -19,4 +19,9 @@ export interface AppConfig {
   mode: 'normal' | 'prompt';
   aiServices: AIService;
   theme: 'light' | 'dark';
+  // 对话生成配置
+  dialogueConfig: {
+    newWordRatio: number; // 生词比例 (0-100)
+    familiarWordLevel: number; // 熟词度 (1-5)
+  };
 }

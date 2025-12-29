@@ -7,8 +7,15 @@ import { LEARNING_MODES, LearningMode } from '@/config/app';
 export interface UserConfigState {
   mode: LearningMode;
   aiServices: AIService;
+  dialogueConfig: {
+    newWordRatio: number;
+    familiarWordLevel: number;
+  };
+  userId: string;
   updateMode: (mode: LearningMode) => void;
   updateAIServices: (services: Partial<AIService>) => void;
+  updateDialogueConfig: (config: Partial<{ newWordRatio: number; familiarWordLevel: number }>) => void;
+  updateUserId: (id: string) => void;
 }
 
 // 创建个人配置模块的store
@@ -21,6 +28,11 @@ export const useUserConfigStore = create<UserConfigState>()(
         asrService: 'zhipu',
         ttsService: 'browser'
       },
+      dialogueConfig: {
+        newWordRatio: 30, // 默认生词比例30%
+        familiarWordLevel: 3 // 默认熟词度3
+      },
+      userId: '',
       updateMode: (mode) =>
         set(() => ({
           mode,
@@ -31,6 +43,17 @@ export const useUserConfigStore = create<UserConfigState>()(
             ...state.aiServices,
             ...services
           }
+        })),
+      updateDialogueConfig: (config) =>
+        set((state) => ({
+          dialogueConfig: {
+            ...state.dialogueConfig,
+            ...config
+          }
+        })),
+      updateUserId: (id) =>
+        set(() => ({
+          userId: id,
         })),
     }),
     {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { apiRequest } from '../apiWrapper'
 import { generateDialoguePrompt } from '@/app/lib/prompts/generatePrompt'
 import { textAIServices } from '@/config/ai-services'
+import { VocabularyDAL } from '../vocabulary/dal'
 
 // 定义请求参数接口
 interface DialogueRequest {
@@ -11,6 +12,8 @@ interface DialogueRequest {
   language: string
   difficulty?: 'beginner' | 'intermediate' | 'advanced'
   aiService?: string // AI服务标识
+  dialogueConfig?: { newWordRatio: number; familiarWordLevel: number }
+  userId?: number
 }
 
 // 定义响应数据接口
@@ -37,7 +40,13 @@ interface ZhipuAIResponse {
 export const POST = async (request: Request) => {
   try {
     const body = await request.json()
-    const { scene, mode = 'normal', aiService = 'zhipu' } = body as DialogueRequest
+    const { 
+      scene, 
+      mode = 'normal', 
+      aiService = 'zhipu',
+      dialogueConfig = { newWordRatio: 30, familiarWordLevel: 3 },
+      userId
+    } = body as DialogueRequest
 
     if (!scene) {
       return NextResponse.json(
@@ -46,10 +55,28 @@ export const POST = async (request: Request) => {
       )
     }
     
+    // 获取用户单词表
+    let vocabulary: Array<any> = []
+    if (userId) {
+      try {
+        const wordsResult = await VocabularyDAL.getWords({ userId })
+        vocabulary = wordsResult.words
+      } catch (error) {
+        console.error('获取用户单词表失败:', error)
+        // 如果获取单词表失败，继续使用空数组
+      }
+    }
+    
     // 根据模式返回不同的响应
     if (mode === 'prompt') {
       // 提示词模式：返回提示词，不调用AI
-      const fullPrompt = generateDialoguePrompt(scene)
+      const vocabularyJson = JSON.stringify(vocabulary)
+      const fullPrompt = generateDialoguePrompt(
+        scene,
+        dialogueConfig.newWordRatio.toString(),
+        dialogueConfig.familiarWordLevel,
+        vocabularyJson
+      )
       
       return NextResponse.json<DialogueResponse>({
         prompt: fullPrompt
@@ -64,10 +91,16 @@ export const POST = async (request: Request) => {
       }
       
       // 准备发送给AI的消息内容
+      const vocabularyJson = JSON.stringify(vocabulary)
       const messages = [
         {
           role: 'system',
-          content: generateDialoguePrompt(scene)
+          content: generateDialoguePrompt(
+            scene,
+            dialogueConfig.newWordRatio.toString(),
+            dialogueConfig.familiarWordLevel,
+            vocabularyJson
+          )
         },
         {
           role: 'user',
