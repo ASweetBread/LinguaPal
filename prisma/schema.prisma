@@ -26,8 +26,21 @@ model User {
   phraseMeanings PhraseMeaning[]
   learningStats LearningStat[]
   reviewDetails TodayReviewDetail[]
+  config       Config?
   
   @@map("users")
+}
+
+model Config {
+  id        Int    @id @default(autoincrement())
+  userId    Int    @unique
+  key       String
+  value     String
+  
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, key])
+  @@map("configs")
 }
 
 model Keyword {

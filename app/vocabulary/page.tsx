@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import NavBar from '../components/NavBar';
 import VocabularyTest from '../components/VocabularyTest';
+import WordList from '../components/VocabularyList';
 import { useState } from 'react';
 
 // 定义底部状态栏组件
@@ -32,19 +33,7 @@ function VocabularyList() {
         <VocabularyTest isOpen={isTestOpen} onOpenChange={setIsTestOpen} />
         
         {/* 单词列表容器 */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg min-h-[400px]">
-          <div className="p-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400">
-              暂无记录的单词。在学习过程中，系统会自动记录你遇到的生词。
-            </p>
-            <Link 
-              href="/" 
-              className="mt-4 inline-block text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              返回主页开始学习
-            </Link>
-          </div>
-        </div>
+        <WordList />
       </div>
     </main>
   )
