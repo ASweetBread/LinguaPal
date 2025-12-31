@@ -12,11 +12,18 @@ export interface UserConfigState {
     familiarWordLevel: number;
   };
   userId: string;
+  currentLevel: string;
+  vocabularyAbility: string;
   updateMode: (mode: LearningMode) => void;
   updateAIServices: (services: Partial<AIService>) => void;
   updateDialogueConfig: (config: Partial<{ newWordRatio: number; familiarWordLevel: number }>) => void;
   updateUserId: (id: string) => void;
+  updateCurrentLevel: (level: string) => void;
+  updateVocabularyAbility: (ability: string) => void;
+  setUserInfo: (info: Partial<UserConfigState>) => void;
 }
+
+
 
 // 创建个人配置模块的store
 export const useUserConfigStore = create<UserConfigState>()(
@@ -33,6 +40,8 @@ export const useUserConfigStore = create<UserConfigState>()(
         familiarWordLevel: 3 // 默认熟词度3
       },
       userId: '',
+      currentLevel: "A1", // 默认词汇水平A1
+      vocabularyAbility: "初级学习者", // 默认能力描述
       updateMode: (mode) =>
         set(() => ({
           mode,
@@ -54,6 +63,20 @@ export const useUserConfigStore = create<UserConfigState>()(
       updateUserId: (id) =>
         set(() => ({
           userId: id,
+        })),
+      updateCurrentLevel: (level) =>
+        set(() => ({
+          currentLevel: level,
+        })),
+      updateVocabularyAbility: (ability) =>
+        set(() => ({
+          vocabularyAbility: ability,
+        })),
+      // 设置用户信息
+      setUserInfo: (info) =>
+        set((state) => ({
+          ...state,
+          ...info
         })),
     }),
     {

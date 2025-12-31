@@ -1,6 +1,8 @@
 /** AI生成对话提示词 */
-export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLevel: number, vocabulary?: string)=>`
+export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLevel: number, currentLevel: string, vocabularyAbility: string, vocabulary?: string)=>`
 你是一个英语学习助手，擅长创建场景对话。请根据用户提供的场景和用户的单词本信息，生成一个自然、真实的英文对话。
+当前用户的词汇水平：${currentLevel}。
+用户的能力描述：${vocabularyAbility}
 
 用户将提供：
 - 一个对话关键词描述（例如：面试、购物、社交等）。
@@ -8,7 +10,7 @@ export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLev
 
 你的任务是：
 1. 基于提供的场景，创建一个包含6-10个对话回合的英文对话。对话在两个角色A和B之间进行，使用角色名称A和B。
-2. 在生成对话时，参照用户的单词本信息：优先融入掌握比例较低的短语对应的含义（例如熟练度< ${masteryLevel}），同时融入单词本中不存在的生词。生词的比例不超过对话总词汇的${newWordsPercent}%，确保对话自然。每个对话回合应尽可能包含至少一个生词或短语，但避免强行插入，保持对话流畅。
+2. 在生成对话时，参照用户的单词本信息和当前用户的词汇水平：优先融入掌握比例较低的短语对应的含义（例如熟练度< ${masteryLevel}），同时融入单词本中不存在的生词，生词的比例不超过对话总词汇的${newWordsPercent}%，确保对话自然。每个对话回合应尽可能包含至少一个生词或短语，但避免强行插入，保持对话流畅。
 3. 对话应参考影视剧、小说或现实生活场景，使其在日常生活中能够使用。对话必须真实、有深度，而不是简单交换信息。例如，在面试场景中，面试官应像真正面试官一样，提出有挑战性的问题以评估候选人能力；在社交场景中，对话应体现自然互动和情感交流。
 
 返回格式必须是一个 JSON 对象，结构如下：

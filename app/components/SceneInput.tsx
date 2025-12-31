@@ -9,7 +9,7 @@ export default function SceneInput() {
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
   const { setDialogue, setIsLoading, isLoading } = useDialogueStore()
-  const { mode, aiServices, dialogueConfig, userId } = useUserConfigStore()
+  const { mode, aiServices, dialogueConfig, userId, currentLevel, vocabularyAbility } = useUserConfigStore()
   const { vocabulary } = useVocabularyStore()
 
   const handleGenerateDialogue = async () => {
@@ -31,6 +31,8 @@ export default function SceneInput() {
           scene.trim(),
           dialogueConfig.newWordRatio.toString(),
           dialogueConfig.familiarWordLevel,
+          currentLevel,
+          vocabularyAbility,
           vocabularyJson
         )
         setPrompt(generatedPrompt)
@@ -41,7 +43,9 @@ export default function SceneInput() {
           mode, 
           aiServices.textAI,
           dialogueConfig,
-          userId
+          userId,
+          currentLevel,
+          vocabularyAbility
         )
 
         console.log('生成的结果:', data)

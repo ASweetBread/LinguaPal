@@ -6,14 +6,16 @@ export async function generateDialogue(
   mode: 'normal' | 'prompt' = 'normal', 
   aiService?: string,
   dialogueConfig?: { newWordRatio: number; familiarWordLevel: number },
-  userId?: string
+  userId?: string,
+  currentLevel?: string,
+  vocabularyAbility?: string
 ) {
   return clientFetch('/api/generate-dialogue', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ scene, mode, aiService, dialogueConfig, userId }),
+    body: JSON.stringify({ scene, mode, aiService, dialogueConfig, userId, currentLevel, vocabularyAbility }),
     name: 'generate-dialogue-client',
   });
 }
@@ -27,5 +29,73 @@ export async function recognizeSpeech(audioData: string) {
     },
     body: JSON.stringify({ audioData }),
     name: 'speech-recognition-client',
+  });
+}
+
+// 获取用户信息（通过ID）
+export async function getUserById(id: number) {
+  return clientFetch(`/api/user?id=${id}`, {
+    method: 'GET',
+    name: 'get-user-by-id-client',
+  });
+}
+
+// 获取用户信息（通过用户名）
+export async function getUserByUsername(username: string) {
+  return clientFetch(`/api/user?username=${username}`, {
+    method: 'GET',
+    name: 'get-user-by-username-client',
+  });
+}
+
+// 更新用户信息
+export async function updateUser(
+  id: number, 
+  data: {
+    username?: string;
+    password?: string;
+    currentLevel?: string;
+    dailyGoal?: number;
+    vocabularyAbility?: string;
+    totalStudyMinutes?: number;
+  }
+) {
+  return clientFetch('/api/user', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id, ...data }),
+    name: 'update-user-client',
+  });
+}
+
+// 获取配置信息（通过用户ID）
+export async function getConfigByUserId(userId: number) {
+  return clientFetch(`/api/config?user_id=${userId}`, {
+    method: 'GET',
+    name: 'get-config-by-user-id-client',
+  });
+}
+
+// 更新配置信息
+export async function updateConfig(
+  userId: number, 
+  data: {
+    mode?: string;
+    aiTextService?: string;
+    aiAsrService?: string;
+    aiTtsService?: string;
+    dialogueNewWordRatio?: number;
+    dialogueFamiliarWordLevel?: number;
+  }
+) {
+  return clientFetch('/api/config', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ userId, ...data }),
+    name: 'update-config-client',
   });
 }

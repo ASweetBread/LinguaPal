@@ -5,7 +5,7 @@
 export const normalizeString = (s: string) => {
   return s
     .toLowerCase()
-    .replace(/[。。，,!?;:()\[\]"'“”‘’]/g, '')
+    .replace(/[-。，！？；：（）【】「」『』“”‘’'".,!?;:()\[\]{}\/\\=_+<>~`@#$%^&*|]/g, '')
     .replace(/\s+/g, ' ')
     .trim()
 }
@@ -37,8 +37,12 @@ export const levenshteinDistance = (str1: string, str2: string): number => {
 
 // 字符相似度百分比
 export const calculateSimilarity = (str1: string, str2: string): number => {
-  const distance = levenshteinDistance(str1, str2)
-  const maxLength = Math.max(str1.length, str2.length)
+  // 标准化字符串，移除标点符号和空格
+  const normStr1 = normalizeString(str1)
+  const normStr2 = normalizeString(str2)
+  
+  const distance = levenshteinDistance(normStr1, normStr2)
+  const maxLength = Math.max(normStr1.length, normStr2.length)
   return maxLength > 0 ? (1 - distance / maxLength) * 100 : 100
 }
 
@@ -47,6 +51,10 @@ export const calculateSimilarity = (str1: string, str2: string): number => {
 export const markDifferencesByWord = (reference: string, input: string) => {
   const refWords = reference.split(/\s+/).filter(Boolean)
   const inWords = input.split(/\s+/).filter(Boolean)
+
+  // 标准化后的单词数组，用于比较
+  const normRefWords = refWords.map(word => normalizeString(word))
+  const normInWords = inWords.map(word => normalizeString(word))
 
   const m = refWords.length
   const n = inWords.length
@@ -57,7 +65,7 @@ export const markDifferencesByWord = (reference: string, input: string) => {
 
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      if (refWords[i - 1] === inWords[j - 1]) lcs[i][j] = lcs[i - 1][j - 1] + 1
+      if (normRefWords[i - 1] === normInWords[j - 1]) lcs[i][j] = lcs[i - 1][j - 1] + 1
       else lcs[i][j] = Math.max(lcs[i - 1][j], lcs[i][j - 1])
     }
   }
@@ -67,7 +75,7 @@ export const markDifferencesByWord = (reference: string, input: string) => {
   let i = m
   let j = n
   while (i > 0 && j > 0) {
-    if (refWords[i - 1] === inWords[j - 1]) {
+    if (normRefWords[i - 1] === normInWords[j - 1]) {
       matches.add(i - 1)
       i--
       j--

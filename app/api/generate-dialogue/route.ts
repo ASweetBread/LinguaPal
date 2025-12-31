@@ -14,6 +14,8 @@ interface DialogueRequest {
   aiService?: string // AI服务标识
   dialogueConfig?: { newWordRatio: number; familiarWordLevel: number }
   userId?: number
+  currentLevel?: string
+  vocabularyAbility?: string
 }
 
 // 定义响应数据接口
@@ -45,7 +47,9 @@ export const POST = async (request: Request) => {
       mode = 'normal', 
       aiService = 'zhipu',
       dialogueConfig = { newWordRatio: 30, familiarWordLevel: 3 },
-      userId
+      userId,
+      currentLevel = "A1",
+      vocabularyAbility = "初级学习者"
     } = body as DialogueRequest
 
     if (!scene) {
@@ -75,6 +79,8 @@ export const POST = async (request: Request) => {
         scene,
         dialogueConfig.newWordRatio.toString(),
         dialogueConfig.familiarWordLevel,
+        currentLevel,
+        vocabularyAbility,
         vocabularyJson
       )
       
@@ -99,6 +105,8 @@ export const POST = async (request: Request) => {
             scene,
             dialogueConfig.newWordRatio.toString(),
             dialogueConfig.familiarWordLevel,
+            currentLevel,
+            vocabularyAbility,
             vocabularyJson
           )
         },
