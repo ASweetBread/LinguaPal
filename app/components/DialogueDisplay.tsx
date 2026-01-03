@@ -3,14 +3,15 @@ import React, { useRef, useEffect, useState } from 'react'
 import { useDialogueStore, useUserConfigStore } from '@/app/store'
 import { recognizeSpeech as recognizeSpeechApi } from '../lib/apiCalls';
 import useRecord from '../lib/hooks/useRecord';
-import PracticeFlow from './PracticeFlow'
 import { calculateSimilarity } from '../lib/utils/stringCompare'
 
 export default function DialogueDisplay() {
-  const { 
+  const {
     dialogue, 
+    vocabulary,
     currentSentenceIndex, 
-    setCurrentSentenceIndex
+    setCurrentSentenceIndex,
+    setShowPractice
   } = useDialogueStore()
   
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -28,7 +29,6 @@ export default function DialogueDisplay() {
       }
     }
   });
-  const [showPractice, setShowPractice] = useState(false)
   // 本组件本地维护句子练习状态，避免与其他组件耦合
   const [localPracticeStates, setLocalPracticeStates] = useState<Record<number, { passed: boolean | null; recognizedText: string }>>({})
 
@@ -47,17 +47,9 @@ export default function DialogueDisplay() {
     return null
   }
 
-  if (showPractice) {
-    return (
-      <div className="w-full max-w-3xl mx-auto">
-        <PracticeFlow onFinish={() => setShowPractice(false)} />
-      </div>
-    )
-  }
-
 
   
-  
+
   // 开始录音
   const startRecording = async (sentenceIndex: number) => {
     try {
@@ -241,6 +233,37 @@ export default function DialogueDisplay() {
             >
               重置所有练习
             </button>
+          </div>
+        )}
+        
+        {/* 显示生成的词汇表 */}
+        {vocabulary && vocabulary.length > 0 && (
+          <div className="mt-10">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">对话生词表</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {vocabulary.map((item, index) => (
+                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-medium text-gray-900">{item.word}</h3>
+                    {item.phonetic && (
+                      <span className="text-sm text-gray-500">{item.phonetic}</span>
+                    )}
+                  </div>
+                  {item.partOfSpeech && (
+                    <div className="text-sm text-blue-600 mb-2">{item.partOfSpeech}</div>
+                  )}
+                  <div className="text-gray-700 mb-3">{item.meanings}</div>
+                  {item.phrase && (
+                    <div className="mt-2 p-2 bg-gray-50 rounded">
+                      <div className="text-sm font-medium text-gray-800">短语：{item.phrase}</div>
+                      {item.phraseMeaning && (
+                        <div className="text-sm text-gray-600">{item.phraseMeaning}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

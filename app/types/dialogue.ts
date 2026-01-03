@@ -8,8 +8,21 @@ export interface DialogueItem {
   text_cn: string
 }
 
+export interface VocabularyItem {
+  id: number | null
+  word: string
+  phonetic?: string
+  meanings: string
+  partOfSpeech?: string
+  phrase?: string
+  phraseMeaning?: string
+  errorCount?: number
+  totalPracticeCount?: number
+}
+
 export interface GenerateDialogueResponse {
   dialogue: DialogueItem[]
+  vocabulary: VocabularyItem[]
 }
 
 // 说明：服务端应该返回一个符合 GenerateDialogueResponse 的 JSON 对象。

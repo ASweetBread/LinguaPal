@@ -15,7 +15,7 @@ type Task = {
 
 
 export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
-  const { dialogue } = useDialogueStore()
+  const { dialogue, vocabulary, updateVocabularyErrorCount, setShowPractice } = useDialogueStore()
 
   // 本组件本地维护练习状态，避免使用全局store
   const [localPracticeStates, setLocalPracticeStates] = useState<Record<number, { passed: boolean | null; recognizedText: string }>>({})
@@ -36,10 +36,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [showResult, setShowResult] = useState(false)
   const [lastResultCorrect, setLastResultCorrect] = useState<boolean | null>(null)
   const [lastDiff, setLastDiff] = useState<{ word: string; correct: boolean }[]>([])
-
-  // 错误队列：在一轮结束后若存在错误，会被用于下一轮复习
-  const [errorQueue, setErrorQueue] = useState<Task[]>([])
-  const [nextErrorQueue, setNextErrorQueue] = useState<Task[]>([])
 
   // 根据 practiceRole 构建任务队列（提示一方为 practiceRole，用户填写另一方）
   const buildTasksForRole = (role: 'A' | 'B') => {
@@ -66,8 +62,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     const t = buildTasksForRole(practiceRole)
     setTasks(t)
     setCurrent(0)
-    setErrorQueue([])
-    setNextErrorQueue([])
     setShowResult(false)
     setUserInput('')
     setLastResultCorrect(null)
@@ -95,10 +89,31 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     }))
 
     if (!correct) {
-      // 加入下一轮复习队列，避免重复加入
-      setNextErrorQueue(prev => {
-        if (prev.some(t => t.targetIndex === currentTask.targetIndex)) return prev
-        return [...prev, currentTask]
+      // 将没通过的任务添加到当前任务队列的尾部，实现单个复习队列
+      setTasks(prev => {
+        // 检查当前任务是否已经在队列中（避免重复添加）
+        const isAlreadyInQueue = prev.some((t, idx) => idx > current && t.targetIndex === currentTask.targetIndex)
+        if (isAlreadyInQueue) return prev
+        
+        // 创建新的任务数组，保留当前及之前的任务，在尾部添加当前任务
+        const newTasks = [...prev]
+        newTasks.push(currentTask)
+        return newTasks
+      })
+
+      // 更新vocabulary中错误单词的errorCount
+      // 找出所有答错的单词
+      const incorrectWords = diff
+        .filter(item => !item.correct)
+        .map(item => item.word.trim())
+        .filter(word => word.length > 0)
+      
+      // 检查每个答错的单词是否在vocabulary中，如果是则更新errorCount
+      incorrectWords.forEach(word => {
+        const isInVocabulary = vocabulary.some(vocabItem => vocabItem.word === word)
+        if (isInVocabulary) {
+          updateVocabularyErrorCount(word)
+        }
       })
     }
 
@@ -117,35 +132,16 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
       return
     }
 
-    // 本轮结束，检查是否有错误需要复习
-    if (nextErrorQueue.length > 0) {
-      // 进入错误复习，清空 nextErrorQueue 在开始新一轮之前
-      setTasks(nextErrorQueue)
-      setErrorQueue(nextErrorQueue)
-      setNextErrorQueue([])
-      setCurrent(0)
-      return
-    }
-
-    // 如果没有错误且当前是 A 轮，则切换到 B；如果是 B 轮且无错误，则结束
+    // 如果当前是 A 轮，则切换到 B
     if (practiceRole === 'A') {
       setPracticeRole('B')
       // buildTasksForRole 会在 practiceRole effect 里被触发
       return
     }
 
-    // 两个轮次都完成且无错误，练习结束
+    // 两个轮次都完成，练习结束
     if (onFinish) onFinish()
   }
-
-  // 当处于错误复习阶段，如果用户答对则从 errorQueue 中剔除
-  useEffect(() => {
-    if (!showResult) return
-    if (lastResultCorrect && errorQueue.length > 0) {
-      // 从 errorQueue 移除当前任务
-      setErrorQueue(prev => prev.filter(t => t.targetIndex !== currentTask?.targetIndex))
-    }
-  }, [showResult, lastResultCorrect])
 
   if (!dialogue || dialogue.length === 0) return null
 
@@ -169,8 +165,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
           <span className="text-sm text-gray-500">进度：{current + 1}/{tasks.length}</span>
           <button
             onClick={() => {
-              // 直接结束练习并调用回调
-              if (onFinish) onFinish()
+              // 直接结束练习，显示SceneInput
+              setShowPractice(false)
             }}
             className="px-2 py-1 bg-gray-200 rounded text-sm"
           >退出</button>

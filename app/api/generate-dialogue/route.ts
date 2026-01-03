@@ -20,13 +20,20 @@ interface DialogueRequest {
 
 // 定义响应数据接口
 interface DialogueResponse {
-  dialogue?: string
+  dialogue?: Array<{
+    role: string
+    text: string
+    text_cn: string
+  }>
   prompt?: string
   translation?: string
   vocabulary?: Array<{
     word: string
-    meaning: string
-    usage?: string
+    phonetic?: string
+    meanings: string
+    partOfSpeech?: string
+    phrase?: string
+    phraseMeaning?: string
   }>
 }
 
@@ -217,9 +224,10 @@ export const POST = async (request: Request) => {
       }
       
       // 构建响应对象
+      const aiResponse = JSON.parse(generatedContent)
       const responseData: DialogueResponse = {
-        dialogue: JSON.parse(generatedContent),
-        // 这里可以根据需要添加翻译和词汇表信息
+        dialogue: aiResponse.dialogue || [],
+        vocabulary: aiResponse.vocabulary || []
       }
       
       return NextResponse.json<DialogueResponse>(responseData)

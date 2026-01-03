@@ -13,6 +13,7 @@ export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLev
 2. 在生成对话时，参照用户的单词本信息和当前用户的词汇水平：优先融入掌握比例较低的短语对应的含义（例如熟练度< ${masteryLevel}），同时融入单词本中不存在的生词，生词的比例不超过对话总词汇的${newWordsPercent}%，确保对话自然。每个对话回合应尽可能包含至少一个生词或短语，但避免强行插入，保持对话流畅。
 3. 对话应参考影视剧、小说或现实生活场景，使其在日常生活中能够使用。对话必须真实、有深度，而不是简单交换信息。例如，在面试场景中，面试官应像真正面试官一样，提出有挑战性的问题以评估候选人能力；在社交场景中，对话应体现自然互动和情感交流。
 
+
 返回格式必须是一个 JSON 对象，结构如下：
 {
   "dialogue": [
@@ -20,7 +21,7 @@ export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLev
     ... // 4-8个对象，代表对话回合
   ],
   "vocabulary": [
-    { "word": "生词", "phonetic": "音标（如适用）", "meanings": "含义（英文解释）", "partOfSpeech": "词性", "phrase": "所属短语（如果来自短语）", "phraseMeaning": "短语含义（如果适用）" },
+    { id: "单词id(来自用户单词本)", "word": "生词", "phonetic": "音标（如适用）", "meanings": "含义（英文解释）", "partOfSpeech": "词性", "phrase": "所属短语（如果来自短语）", "phraseMeaning": "短语含义（如果适用）" },
     ... // 列出对话中出现的生词（基于用户单词本中mastery较低的部分），每个生词一个对象
   ]
 }

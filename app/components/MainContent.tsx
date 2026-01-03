@@ -1,11 +1,15 @@
 'use client';
 import SceneInput from './SceneInput';
 import DialogueDisplay from './DialogueDisplay';
+import PracticeFlow from './PracticeFlow';
+import { useDialogueStore } from '../store/dialogueStore';
 
 /**
- * 主内容区域组件，包含场景输入和对话显示
+ * 主内容区域组件，包含场景输入、对话显示和练习流程
  */
 export default function MainContent() {
+  const { showPractice } = useDialogueStore();
+
   return (
     <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-120px)]">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
@@ -14,11 +18,19 @@ export default function MainContent() {
           通过AI生成的场景对话，提升你的英语口语能力
         </p>
         
-        {/* 集成场景输入组件 */}
-        <SceneInput />
-        
-        {/* 集成对话显示组件 */}
-        <DialogueDisplay />
+        {/* 根据showPractice状态决定显示哪个组件 */}
+        {!showPractice ? (
+          <>
+            {/* 集成场景输入组件 */}
+            <SceneInput />
+            
+            {/* 集成对话显示组件 */}
+            <DialogueDisplay />
+          </>
+        ) : (
+          /* 集成练习流程组件 */
+          <PracticeFlow />
+        )}
       </div>
     </main>
   );

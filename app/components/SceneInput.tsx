@@ -8,7 +8,7 @@ export default function SceneInput() {
   const [scene, setScene] = useState('')
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
-  const { setDialogue, setIsLoading, isLoading } = useDialogueStore()
+  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary } = useDialogueStore()
   const { mode, aiServices, dialogueConfig, userId, currentLevel, vocabularyAbility } = useUserConfigStore()
   const { vocabulary } = useVocabularyStore()
 
@@ -50,9 +50,12 @@ export default function SceneInput() {
 
         console.log('生成的结果:', data)
         
-        // 正常模式：直接设置对话
+        // 正常模式：设置对话和词汇表
         if (data.dialogue) {
-          setDialogue(data.dialogue)
+          setDialogueAndVocabulary({
+            dialogue: data.dialogue,
+            vocabulary: data.vocabulary || []
+          })
         }
       }
     } catch (error) {
@@ -72,7 +75,10 @@ export default function SceneInput() {
     try {
       // 尝试解析用户输入的对话
       const parsedDialogue = JSON.parse(userDialogueInput.trim())
-      setDialogue(parsedDialogue)
+      setDialogueAndVocabulary({
+        dialogue: parsedDialogue.dialogue,
+        vocabulary: parsedDialogue.vocabulary || []
+      })
       // 清空输入
       setUserDialogueInput('')
       setPrompt('')
