@@ -1,3 +1,18 @@
+-- 清库脚本：按照外键依赖顺序删除所有表的数据
+-- 删除顺序：先删除子表，再删除父表
+
+-- 删除关联表（依赖其他表的表）
+DELETE FROM word_phrase_relations;
+DELETE FROM error_records;
+DELETE FROM phrase_meanings;
+DELETE FROM phrases;
+DELETE FROM words;
+DELETE FROM keywords;
+DELETE FROM learning_stats;
+DELETE FROM today_review_details;
+DELETE FROM configs;
+DELETE FROM users;
+
 -- 插入测试用户数据
 INSERT INTO users (username, password, current_level, daily_goal, total_study_minutes, vocabulary_ability)
 VALUES ('testuser', 'testpassword', 'A2', 10, 300, '中级学习者')

@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { useDialogueStore, useUserConfigStore, useVocabularyStore } from '@/app/store'
+import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore } from '@/app/store'
 import { generateDialogue } from '../lib/apiCalls';
 import { generateDialoguePrompt } from '../lib/prompts/generatePrompt';
 
@@ -9,7 +9,8 @@ export default function SceneInput() {
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
   const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary } = useDialogueStore()
-  const { mode, aiServices, dialogueConfig, userId, currentLevel, vocabularyAbility } = useUserConfigStore()
+  const { mode, aiServices, dialogueConfig, currentLevel, vocabularyAbility } = useUserConfigStore()
+  const { userId } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
 
   const handleGenerateDialogue = async () => {

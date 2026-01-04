@@ -61,9 +61,19 @@ export class UserService {
    */
   static mapUserToConfig(userData: any): Partial<UserConfigState> {
     return {
-      userId: userData.id?.toString() || '',
       currentLevel: userData.currentLevel || 'A1',
       vocabularyAbility: userData.vocabularyAbility || '初级学习者'
+    };
+  }
+
+  /**
+   * 将API返回的用户信息转换为用户信息格式
+   * @param userData API返回的用户信息
+   * @returns 用户信息对象
+   */
+  static mapUserInfo(userData: any): { userId: string } {
+    return {
+      userId: userData.id?.toString() || ''
     };
   }
 }

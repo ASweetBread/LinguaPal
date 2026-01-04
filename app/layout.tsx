@@ -2,7 +2,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { useEffect, useState } from 'react'
-import { useAppConfigStore, useUserConfigStore } from '@/app/store'
+import { useAppConfigStore, useUserConfigStore, useUserInfoStore } from '@/app/store'
 import { Toaster } from '@/components/ui/toaster'
 import LoadingWrapper from '@/app/components/LoadingWrapper'
 import { UserService } from '@/app/lib/userService'
@@ -19,7 +19,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   const { theme, isLoading, error, setIsLoading, setError, resetError } = useAppConfigStore();
-  const { userId, setUserInfo } = useUserConfigStore();
+  const { setUserInfo } = useUserConfigStore();
+  const { userId, setUserId } = useUserInfoStore();
   
   // 根据主题状态更新html的dark类
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function RootLayout({
       setIsLoading(true);
       
       // 从localStorage获取userId
-      const storedConfig = localStorage.getItem('lingua-pal-user-config-storage');
+      const storedConfig = localStorage.getItem('lingua-pal-user-info-storage');
       let storedUserId = userId;
       if (storedConfig) {
         const parsedConfig = JSON.parse(storedConfig);
@@ -49,6 +50,9 @@ export default function RootLayout({
         const userData = await UserService.getUserInfo(parseInt(storedUserId));
         // 更新用户配置
         setUserInfo(UserService.mapUserToConfig(userData));
+        // 更新用户信息
+        const userInfo = UserService.mapUserInfo(userData);
+        setUserId(userInfo.userId);
       }
       
       setIsLoading(false);

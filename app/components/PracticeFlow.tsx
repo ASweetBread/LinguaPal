@@ -6,43 +6,38 @@ import {
   isInputCorrect,
   calculateSimilarity
 } from '../lib/utils/stringCompare'
+import PracticeResult from './PracticeResult'
+import TypingInput from './TypingInput'
 
 type Task = {
   promptIndex: number
   targetIndex: number
 }
 
-
+type ReviewItem = {
+  promptIndex: number
+  targetIndex: number
+  diff: Array<{ word: string; correct: boolean }>
+  passed: boolean
+  userInput: string
+}
 
 export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const { dialogue, vocabulary, updateVocabularyErrorCount, setShowPractice } = useDialogueStore()
 
-  // 本组件本地维护练习状态，避免使用全局store
-  const [localPracticeStates, setLocalPracticeStates] = useState<Record<number, { passed: boolean | null; recognizedText: string }>>({})
-
-  useEffect(() => {
-    if (!dialogue) return
-    const map: Record<number, { passed: boolean | null; recognizedText: string }> = {}
-    dialogue.forEach((_, idx) => {
-      map[idx] = { passed: null, recognizedText: '' }
-    })
-    setLocalPracticeStates(map)
-  }, [dialogue])
-
-  const [practiceRole, setPracticeRole] = useState<'A' | 'B'>('A')
   const [tasks, setTasks] = useState<Task[]>([])
   const [current, setCurrent] = useState(0)
   const [userInput, setUserInput] = useState('')
   const [showResult, setShowResult] = useState(false)
   const [lastResultCorrect, setLastResultCorrect] = useState<boolean | null>(null)
   const [lastDiff, setLastDiff] = useState<{ word: string; correct: boolean }[]>([])
+  const [showPracticeResult, setShowPracticeResult] = useState(false)
+  const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
 
-  // 根据 practiceRole 构建任务队列（提示一方为 practiceRole，用户填写另一方）
   const buildTasksForRole = (role: 'A' | 'B') => {
     const res: Task[] = []
     for (let i = 0; i < dialogue.length; i++) {
       if (dialogue[i].role === role) {
-        // 找到下一个不同角色作为目标
         let target = -1
         for (let j = i + 1; j < dialogue.length; j++) {
           if (dialogue[j].role !== role) {
@@ -56,16 +51,23 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     return res
   }
 
-  // 初始化任务
+  const buildAllTasks = () => {
+    const tasksA = buildTasksForRole('A')
+    const tasksB = buildTasksForRole('B')
+    return [...tasksA, ...tasksB]
+  }
+
   useEffect(() => {
     if (!dialogue || dialogue.length === 0) return
-    const t = buildTasksForRole(practiceRole)
-    setTasks(t)
+    const allTasks = buildAllTasks()
+    setTasks(allTasks)
     setCurrent(0)
     setShowResult(false)
+    setShowPracticeResult(false)
     setUserInput('')
     setLastResultCorrect(null)
-  }, [dialogue, practiceRole])
+    setReviewQueue([])
+  }, [dialogue])
 
   const currentTask = tasks[current]
 
@@ -82,33 +84,31 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setLastResultCorrect(correct)
     setShowResult(true)
 
-    // 更新本地练习状态
-    setLocalPracticeStates(prev => ({
-      ...prev,
-      [currentTask.targetIndex]: { passed: correct, recognizedText: input }
-    }))
+    const reviewItem: ReviewItem = {
+      promptIndex: currentTask.promptIndex,
+      targetIndex: currentTask.targetIndex,
+      diff,
+      passed: correct,
+      userInput: input
+    }
+
+    setReviewQueue(prev => [...prev, reviewItem])
 
     if (!correct) {
-      // 将没通过的任务添加到当前任务队列的尾部，实现单个复习队列
       setTasks(prev => {
-        // 检查当前任务是否已经在队列中（避免重复添加）
         const isAlreadyInQueue = prev.some((t, idx) => idx > current && t.targetIndex === currentTask.targetIndex)
         if (isAlreadyInQueue) return prev
         
-        // 创建新的任务数组，保留当前及之前的任务，在尾部添加当前任务
         const newTasks = [...prev]
         newTasks.push(currentTask)
         return newTasks
       })
 
-      // 更新vocabulary中错误单词的errorCount
-      // 找出所有答错的单词
       const incorrectWords = diff
         .filter(item => !item.correct)
         .map(item => item.word.trim())
         .filter(word => word.length > 0)
       
-      // 检查每个答错的单词是否在vocabulary中，如果是则更新errorCount
       incorrectWords.forEach(word => {
         const isInVocabulary = vocabulary.some(vocabItem => vocabItem.word === word)
         if (isInVocabulary) {
@@ -132,23 +132,42 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
       return
     }
 
-    // 如果当前是 A 轮，则切换到 B
-    if (practiceRole === 'A') {
-      setPracticeRole('B')
-      // buildTasksForRole 会在 practiceRole effect 里被触发
-      return
-    }
+    setShowPracticeResult(true)
+  }
 
-    // 两个轮次都完成，练习结束
-    if (onFinish) onFinish()
+  const handleRestart = () => {
+    setShowPracticeResult(false)
+    setReviewQueue([])
+    const allTasks = buildAllTasks()
+    setTasks(allTasks)
+    setCurrent(0)
+    setShowResult(false)
+    setUserInput('')
+    setLastResultCorrect(null)
+  }
+
+  const handleExit = () => {
+    setShowPractice(false)
+  }
+
+  if (showPracticeResult) {
+    return (
+      <PracticeResult
+        dialogue={dialogue}
+        reviewQueue={reviewQueue}
+        vocabulary={vocabulary}
+        onRestart={handleRestart}
+        onExit={handleExit}
+      />
+    )
   }
 
   if (!dialogue || dialogue.length === 0) return null
 
   if (!currentTask) {
     return (
-      <div className="p-4 bg-yellow-50 rounded-md">
-        <p className="text-sm text-gray-700">当前没有可练习的句子（可能对话结构不完整）。</p>
+      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+        <p className="text-sm text-gray-700 dark:text-gray-300">当前没有可练习的句子（可能对话结构不完整）。</p>
       </div>
     )
   }
@@ -156,37 +175,36 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const promptText = dialogue[currentTask.promptIndex].text
   const targetText = dialogue[currentTask.targetIndex].text
   const targetChinese = dialogue[currentTask.targetIndex].text_cn
+  const isLastTask = current === tasks.length - 1
 
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">练习：展示 {practiceRole} 的句子，请填写另一方的回复</h3>
+        <h3 className="text-lg font-semibold">练习：请填写另一方的回复</h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">进度：{current + 1}/{tasks.length}</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">进度：{current + 1}/{tasks.length}</span>
           <button
             onClick={() => {
-              // 直接结束练习，显示SceneInput
               setShowPractice(false)
             }}
-            className="px-2 py-1 bg-gray-200 rounded text-sm"
+            className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-300"
           >退出</button>
         </div>
       </div>
 
       <div className="p-4 mb-4 bg-white dark:bg-gray-800 rounded shadow-sm">
-        <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">提示（{practiceRole}）：</div>
+        <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">提示：</div>
         <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-100 dark:text-gray-800 rounded border">{promptText}</div>
 
-        <label className="block text-sm font-medium mb-2 ">请填写另一方的原句（英文）</label>
-        <textarea
+        <label className="block text-sm font-medium mb-2">请填写另一方的原句（英文）</label>
+        <TypingInput
+          targetText={targetText}
           value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          rows={3}
-          className="w-full border rounded p-2 mb-3 dark:text-gray-800"
+          onChange={setUserInput}
           disabled={showResult}
+          className="mb-3"
         />
 
-        {/* 参考中文提示 */}
         <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">参考中文：</div>
         <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded border mb-3">{targetChinese}</div>
 
@@ -198,25 +216,24 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
             >提交</button>
             <button
               onClick={() => {
-                // 仅显示参考答案，不自动填充用户输入
                 setShowResult(true)
                 setLastResultCorrect(null)
                 setLastDiff(markDifferencesByWord(targetText, userInput))
               }}
-              className="px-3 py-1 bg-gray-200 rounded"
+              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
             >显示参考答案</button>
           </div>
         )}
 
         {showResult && (
           <div className="mt-4">
-            <div className={`p-3 rounded ${lastResultCorrect ? 'bg-green-50' : 'bg-red-50'}`}>
+            <div className={`p-3 rounded ${lastResultCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
               <div className="text-sm font-medium mb-2">参考句（已标注差异）：</div>
-              <div className="text-gray-800">
+              <div className="text-gray-800 dark:text-gray-200">
                 {lastDiff.map((seg, idx) => (
                   <span
                     key={idx}
-                    className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700'}
+                    className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400'}
                   >
                     {seg.word}
                     {idx < lastDiff.length - 1 ? ' ' : ''}
@@ -225,26 +242,35 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
               </div>
             </div>
 
-            {!showResult ? (
-              <>
-                <div className="mt-3 text-sm text-gray-600">你的输入：</div>
-                <div className="p-2 bg-gray-50 rounded border mt-1">{userInput || <em className="text-gray-400">（空）</em>}</div>
-              </>
-            ) : (
-              // 当显示参考句时，隐藏用户输入区域（按需求）
-              null
+            {!lastResultCorrect && (
+              <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                <span className="font-medium">你的输入：</span>
+                {userInput || <em className="text-gray-400">（空）</em>}
+              </div>
             )}
 
             <div className="mt-3 flex gap-2">
-              <button onClick={onNext} className="px-3 py-1 bg-blue-600 text-white rounded">下一句</button>
+              <button 
+                onClick={onNext} 
+                className={`px-3 py-1 rounded ${
+                  isLastTask && lastResultCorrect
+                    ? 'bg-green-600 text-white'
+                    : 'bg-blue-600 text-white'
+                }`}
+              >
+                {isLastTask && lastResultCorrect ? '完成' : '下一句'}
+              </button>
               <button 
                 onClick={() => {
-                  // 直接将当前句子标记为通过
                   if (currentTask) {
-                    setLocalPracticeStates(prev => ({
-                      ...prev,
-                      [currentTask.targetIndex]: { passed: true, recognizedText: userInput || dialogue[currentTask.targetIndex].text }
-                    }))
+                    const reviewItem: ReviewItem = {
+                      promptIndex: currentTask.promptIndex,
+                      targetIndex: currentTask.targetIndex,
+                      diff: markDifferencesByWord(targetText, userInput || targetText),
+                      passed: true,
+                      userInput: userInput || targetText
+                    }
+                    setReviewQueue(prev => [...prev, reviewItem])
                     onNext()
                   }
                 }} 

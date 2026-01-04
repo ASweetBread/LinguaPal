@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useUserConfigStore } from '../store/userConfigStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from '@/components/ui/dialog';
-import Button from './ui/Button';
-import Textarea from './ui/Textarea';
-import { Card, CardContent, CardHeader } from './ui/Card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { copyToClipboard } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
