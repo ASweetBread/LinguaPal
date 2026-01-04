@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef, KeyboardEvent, useEffect } from 'react'
+import React, { useState, useRef, KeyboardEvent, useEffect, useLayoutEffect } from 'react'
 
 interface TypingInputProps {
   targetText: string
@@ -93,11 +93,6 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     setFocusedIndex(index)
   }
 
-  const getLineWidth = (word: string): string => {
-    const baseWidth = Math.max(word.length * 0.6, 2)
-    return `${baseWidth}em`
-  }
-
   const measureTextWidth = (text: string): number => {
     if (!measureRef.current) return 0
     
@@ -111,10 +106,23 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   const getInputWidth = (targetWord: string, userWord: string): string => {
     const textToMeasure = userWord || targetWord
     const width = measureTextWidth(textToMeasure)
+    console.log('测量宽度', textToMeasure, width)
     const minWidth = measureTextWidth(targetWord)
     const finalWidth = Math.max(width, minWidth)
     return `${finalWidth}px`
   }
+  useLayoutEffect(() => {
+    segments.forEach((segment, idx) => {
+      if (segment.type === 'word') {
+        const userWord = userWords[segment.index] || ''
+        const dynamicWidth = getInputWidth(segment.content, userWord)
+        const input = inputRefs.current[segment.index]
+        if (input) {
+          input.style.width = dynamicWidth
+        }
+      }
+    })
+  }, [])
 
   return (
     <div className={`flex flex-wrap items-center ${className}`}>
@@ -137,7 +145,6 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
         if (segment.type === 'word') {
           const userWord = userWords[segment.index] || ''
           const isFocused = focusedIndex === segment.index
-          const dynamicWidth = getInputWidth(segment.content, userWord)
           
           return (
             <div key={`word-${segment.index}`} className="relative inline-flex flex-col items-center">
@@ -152,6 +159,7 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
                 onChange={(e) => handleWordChange(segment.index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, segment.index)}
                 onFocus={() => handleFocus(segment.index)}
+                onBlur={() => setFocusedIndex(-1)}
                 disabled={disabled}
                 className={`
                   bg-transparent outline-none text-left
@@ -163,10 +171,6 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
                     : 'border-gray-400 dark:border-gray-600'
                   }
                 `}
-                style={{ 
-                  minWidth: getLineWidth(segment.content),
-                  width: dynamicWidth
-                }}
                 autoComplete="off"
                 autoCapitalize="off"
                 spellCheck={false}
