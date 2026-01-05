@@ -101,11 +101,14 @@ export default function PracticeResult({
                   {item.passed ? '通过' : '失败'}
                 </span>
               </div>
-
-              <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
+              {
+                /**
+                 * <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">
                 <span className="font-medium">提示：</span>
                 {dialogue[item.promptIndex]?.text || 'N/A'}
               </div>
+                 */
+              }
 
               <div className="mb-2">
                 <div className="text-sm font-medium mb-1">参考句（已标注差异）：</div>

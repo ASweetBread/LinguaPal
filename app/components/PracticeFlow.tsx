@@ -74,7 +74,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const onSubmit = () => {
     if (!currentTask) return
     const ref = dialogue[currentTask.targetIndex].text
-    const input = userInput
+    const input = userInput.replace(/,/g, ' ')
 
     const correct = isInputCorrect(ref, input)
     const similarity = calculateSimilarity(ref, input)

@@ -29,11 +29,11 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
       
       if (/\s/.test(char)) {
         segments.push({ type: 'space', content: ' ', index: -1 })
-      } else if (/[.,!?;:'"()\-]/.test(char)) {
+      } else if (/[.,!?;:"()]/.test(char)) {
         segments.push({ type: 'punctuation', content: char, index: -1 })
       } else {
         let word = ''
-        while (i < text.length && !/[\s.,!?;:'"()\-]/.test(text[i])) {
+        while (i < text.length && !/[\s.,!?;:"()]/.test(text[i])) {
           word += text[i]
           i++
         }
@@ -49,7 +49,7 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   const segments = parseText(targetText)
 
   const parseUserInput = (input: string): string[] => {
-    const words = input.split(/\s+/).filter(w => w.length > 0)
+    const words = input.split(',')
     return words
   }
 
@@ -58,8 +58,9 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   const handleWordChange = (wordIndex: number, newWord: string) => {
     const newWords = [...userWords]
     newWords[wordIndex] = newWord
-    const newValue = newWords.join(' ')
+    const newValue = newWords.join(',')
     onChange(newValue)
+    updateWordWidth()
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, wordIndex: number) => {
@@ -74,6 +75,7 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
       }
     } else if (e.key === 'ArrowRight' && wordIndex < segments.filter(s => s.type === 'word').length - 1) {
       e.preventDefault()
+      console.log('向右移动', wordIndex, e)
       const nextIndex = wordIndex + 1
       const nextInput = inputRefs.current[nextIndex]
       if (nextInput) {
@@ -87,10 +89,6 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
         prevInput.focus()
       }
     }
-  }
-
-  const handleFocus = (index: number) => {
-    setFocusedIndex(index)
   }
 
   const measureTextWidth = (text: string): number => {
@@ -111,7 +109,8 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     const finalWidth = Math.max(width, minWidth)
     return `${finalWidth}px`
   }
-  useLayoutEffect(() => {
+
+  function updateWordWidth() {
     segments.forEach((segment, idx) => {
       if (segment.type === 'word') {
         const userWord = userWords[segment.index] || ''
@@ -122,7 +121,11 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
         }
       }
     })
-  }, [])
+  }
+
+  useLayoutEffect(() => {
+    updateWordWidth()
+  }, [targetText])
 
   return (
     <div className={`flex flex-wrap items-center ${className}`}>
@@ -158,7 +161,7 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
                 value={userWord}
                 onChange={(e) => handleWordChange(segment.index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(e, segment.index)}
-                onFocus={() => handleFocus(segment.index)}
+                onFocus={() => setFocusedIndex(segment.index)}
                 onBlur={() => setFocusedIndex(-1)}
                 disabled={disabled}
                 className={`
