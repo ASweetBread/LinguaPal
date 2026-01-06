@@ -47,10 +47,15 @@ export const calculateSimilarity = (str1: string, str2: string): number => {
 }
 
 // 基于词的LCS以标注参考句中哪些词是匹配的（用于高亮原句的差异）
-// 返回参考句的词数组，每个项包含 { word, correct: boolean }
+// 返回参考句的词数组，每个项包含 { type, word?, correct?, userInput?, value? }
 export const markDifferencesByWord = (reference: string, input: string, rolenames: string[] = []) => {
-  const refWords = reference.split(/\s+/).filter(Boolean)
-  const inWords = input.split(/\s+/).filter(Boolean)
+  // 提取单词和标点符号，保留顺序
+  const tokens = reference.match(/\b\w+(?:'\w+)?\b|[^\w\s]+/g) || []
+  const inputTokens = input.match(/\b\w+(?:'\w+)?\b|[^\w\s]+/g) || []
+
+  // 分离单词和标点符号，用于比较
+  const refWords = tokens.filter(token => /^\b\w+(?:'\w+)?\b$/.test(token))
+  const inWords = inputTokens.filter(token => /^\b\w+(?:'\w+)?\b$/.test(token))
 
   // 标准化后的单词数组，用于比较
   const normRefWords = refWords.map(word => normalizeString(word))
@@ -86,14 +91,39 @@ export const markDifferencesByWord = (reference: string, input: string, rolename
     else j--
   }
 
-  return refWords.map((w, idx) => {
-    // 如果单词是rolename中的name，则correct固定为true
-    const normWord = normalizeString(w)
-    if (normRolenames.includes(normWord)) {
-      return { word: w, correct: true }
+  // 构建结果数组，按原顺序保留单词和标点符号
+  const result: Array<{ type: string; word?: string; correct?: boolean; userInput?: string; value?: string }> = []
+  let wordIndex = 0
+
+  tokens.forEach(token => {
+    if (/^\b\w+(?:'\w+)?\b$/.test(token)) {
+      // 处理单词
+      const normWord = normalizeString(token)
+      const isCorrect = normRolenames.includes(normWord) || matches.has(wordIndex)
+      
+      // 找到对应的用户输入单词
+      let userInputWord = ''
+      if (!isCorrect && wordIndex < inWords.length) {
+        userInputWord = inWords[wordIndex]
+      }
+
+      result.push({
+        type: 'word',
+        word: token,
+        correct: isCorrect,
+        userInput: userInputWord
+      })
+      wordIndex++
+    } else {
+      // 处理标点符号
+      result.push({
+        type: 'punctuation',
+        value: token
+      })
     }
-    return { word: w, correct: matches.has(idx) }
   })
+
+  return result
 }
 
 // 判断输入是否“通过”参考句（默认严格比较 normalize 后相等）

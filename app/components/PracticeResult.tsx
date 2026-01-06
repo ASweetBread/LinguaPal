@@ -1,13 +1,19 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { useDialogueStore, useUserConfigStore } from '@/app/store'
+import { RESULT_ANALYZ_PROMPT } from '../lib/prompts/resultAnalyzPrompt'
+import PromptDisplay from './PromptDisplay'
 import type { VocabularyItem as DialogueVocabularyItem } from '@/app/types/dialogue'
 
 type DiffSegment = {
-  word: string
-  correct: boolean
+  type: string
+  word?: string
+  correct?: boolean
+  userInput?: string
+  value?: string
 }
 
 type ReviewItem = {
@@ -39,11 +45,53 @@ export default function PracticeResult({
   onRestart,
   onExit
 }: PracticeResultProps) {
+  const { currentScene } = useDialogueStore()
+  const { mode } = useUserConfigStore()
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [analysisPrompt, setAnalysisPrompt] = useState('')
+
   const totalTasks = reviewQueue.length
   const passedTasks = reviewQueue.filter(item => item.passed).length
   const failedTasks = totalTasks - passedTasks
 
   const incorrectWords = vocabulary.filter(v => (v.errorCount || 0) > 0)
+
+  const handleComplete = () => {
+    if (mode === 'prompt') {
+      // 提示词模式：生成分析提示词并显示
+      const analysisData = JSON.stringify(reviewQueue.map(item => ({
+        diff: item.diff.filter(seg => seg.type === 'word' && !seg.correct).map(seg => ({
+          word: seg.word,
+          correct: seg.correct,
+          userInput: seg.userInput
+        })),
+        sentence: dialogue[item.targetIndex]?.text || '',
+        userInput: item.userInput
+      })))
+      
+      const prompt = RESULT_ANALYZ_PROMPT(analysisData, currentScene)
+      setAnalysisPrompt(prompt)
+      setShowPrompt(true)
+    } else {
+      // 正常模式：访问新的API路由，将reviewQueue中diff的部分和scene作为参数
+      // 这里需要实现API调用逻辑
+      console.log('Normal mode: Sending data to backend', {
+        diffs: reviewQueue.map(item => item.diff),
+        scene: currentScene
+      })
+      // 调用API后退出
+      onExit()
+    }
+  }
+
+  const handlePromptSubmit = (result: string) => {
+    // 处理分析结果的提交
+    console.log('Analysis result submitted:', result)
+    // 这里可以添加保存分析结果的逻辑
+    // 提交后关闭提示词展示组件并退出
+    setShowPrompt(false)
+    onExit()
+  }
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -74,8 +122,8 @@ export default function PracticeResult({
             <Button onClick={onRestart} className="flex-1">
               重新练习
             </Button>
-            <Button onClick={onExit} variant="secondary" className="flex-1">
-              退出练习
+            <Button onClick={handleComplete} variant="secondary" className="flex-1">
+              完成
             </Button>
           </div>
         </CardContent>
@@ -113,15 +161,26 @@ export default function PracticeResult({
               <div className="mb-2">
                 <div className="text-sm font-medium mb-1">参考句（已标注差异）：</div>
                 <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded text-gray-800 dark:text-gray-200">
-                  {item.diff.map((seg, idx) => (
-                    <span
-                      key={idx}
-                      className={seg.correct ? '' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400 font-medium'}
-                    >
-                      {seg.word}
-                      {idx < item.diff.length - 1 ? ' ' : ''}
-                    </span>
-                  ))}
+                  {item.diff.map((seg, idx) => {
+                    if (seg.type === 'word' && seg.word) {
+                      return (
+                        <span
+                          key={idx}
+                          className={seg.correct ? '' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400 font-medium'}
+                        >
+                          {seg.word}
+                          {idx < item.diff.length - 1 && item.diff[idx + 1].type === 'word' ? ' ' : ''}
+                        </span>
+                      )
+                    } else if (seg.type === 'punctuation' && seg.value) {
+                      return (
+                        <span key={idx} className="">
+                          {seg.value}
+                        </span>
+                      )
+                    }
+                    return null
+                  })}
                 </div>
               </div>
 

@@ -14,10 +14,12 @@ type Task = {
   targetIndex: number
 }
 
+type diffType = Array<{ type: string; word?: string; correct?: boolean; userInput?: string; value?: string }>
+
 type ReviewItem = {
   promptIndex: number
   targetIndex: number
-  diff: Array<{ word: string; correct: boolean }>
+  diff: diffType
   passed: boolean
   userInput: string
 }
@@ -30,7 +32,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [userInput, setUserInput] = useState('')
   const [showResult, setShowResult] = useState(false)
   const [lastResultCorrect, setLastResultCorrect] = useState<boolean | null>(null)
-  const [lastDiff, setLastDiff] = useState<{ word: string; correct: boolean }[]>([])
+  const [lastDiff, setLastDiff] = useState<diffType>([])
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
 
@@ -121,8 +123,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
       })
 
       const incorrectWords = diff
-        .filter(item => !item.correct)
-        .map(item => item.word.trim())
+        .filter(item => item.type === 'word' && !item.correct && item.word)
+        .map(item => item.word!.trim())
         .filter(word => word.length > 0)
       
       incorrectWords.forEach(word => {
@@ -246,15 +248,26 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
             <div className={`p-3 rounded ${lastResultCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
               <div className="text-sm font-medium mb-2">原句（已标注差异）：</div>
               <div className="text-gray-800 dark:text-gray-200">
-                {lastDiff.map((seg, idx) => (
-                  <span
-                    key={idx}
-                    className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400'}
-                  >
-                    {seg.word}
-                    {idx < lastDiff.length - 1 ? ' ' : ''}
-                  </span>
-                ))}
+                {lastDiff.map((seg, idx) => {
+                  if (seg.type === 'word' && seg.word) {
+                    return (
+                      <span
+                        key={idx}
+                        className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400'}
+                      >
+                        {seg.word}
+                        {idx < lastDiff.length - 1 && lastDiff[idx + 1].type === 'word' ? ' ' : ''}
+                      </span>
+                    )
+                  } else if (seg.type === 'punctuation' && seg.value) {
+                    return (
+                      <span key={idx} className="px-0">
+                        {seg.value}
+                      </span>
+                    )
+                  }
+                  return null
+                })}
               </div>
             </div>
 

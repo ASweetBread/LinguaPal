@@ -132,8 +132,8 @@ export class VocabularyDAL {
     });
 
     return result
-      .filter(item => item.difficultyLevel)
-      .map(item => item.difficultyLevel);
+      .filter((item: { difficultyLevel: string | null }) => item.difficultyLevel)
+      .map((item: { difficultyLevel: string | null }) => item.difficultyLevel);
   }
 
   // 获取用户单词统计信息
@@ -150,7 +150,7 @@ export class VocabularyDAL {
 
     return {
       total,
-      byDifficulty: byDifficulty.reduce((acc, item) => {
+      byDifficulty: byDifficulty.reduce((acc: Record<string, number>, item: { difficultyLevel: string | null; _count: { difficultyLevel: number } }) => {
         if (item.difficultyLevel) {
           acc[item.difficultyLevel] = item._count.difficultyLevel;
         }

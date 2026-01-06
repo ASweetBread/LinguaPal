@@ -3,18 +3,18 @@ import React, { useState } from 'react'
 import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore } from '@/app/store'
 import { generateDialogue } from '../lib/apiCalls';
 import { generateDialoguePrompt } from '../lib/prompts/generatePrompt';
+import PromptDisplay from './PromptDisplay';
 
 export default function SceneInput() {
-  const [scene, setScene] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [userDialogueInput, setUserDialogueInput] = useState('')
-  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename } = useDialogueStore()
+  const [showPrompt, setShowPrompt] = useState(false)
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename, currentScene, setCurrentScene } = useDialogueStore()
   const { mode, aiServices, dialogueConfig, currentLevel, vocabularyAbility } = useUserConfigStore()
   const { userId } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
 
   const handleGenerateDialogue = async () => {
-    if (!scene.trim()) {
+    if (!currentScene.trim()) {
       alert('请输入场景描述')
       return
     }
@@ -23,24 +23,24 @@ export default function SceneInput() {
       setIsLoading(true)
       // 生成新对话前清空现有对话
       setDialogue([])
-      setUserDialogueInput('')
       
       if (mode === 'prompt') {
         // 提示词模式：直接在客户端生成提示词，不调用后端API
         const vocabularyJson = JSON.stringify(vocabulary)
-        const generatedPrompt = generateDialoguePrompt(
-          scene.trim(),
+        const prompt = generateDialoguePrompt(
+          currentScene.trim(),
           dialogueConfig.newWordRatio.toString(),
           dialogueConfig.familiarWordLevel,
           currentLevel,
           vocabularyAbility,
           vocabularyJson
         )
-        setPrompt(generatedPrompt)
+        setGeneratedPrompt(prompt)
+        setShowPrompt(true)
       } else {
         // 正常模式：调用后端API生成对话
         const data = await generateDialogue(
-          scene.trim(), 
+          currentScene.trim(), 
           mode, 
           aiServices.textAI,
           dialogueConfig,
@@ -68,24 +68,19 @@ export default function SceneInput() {
     }
   }
 
-  const handleManualDialogueSubmit = () => {
-    if (!userDialogueInput.trim()) {
-      alert('请输入对话内容')
-      return
-    }
-    
+  const handlePromptSubmit = (result: string) => {
+    // 处理分析结果的提交
     try {
       // 尝试解析用户输入的对话
-      const parsedDialogue = JSON.parse(userDialogueInput.trim())
+      const parsedDialogue = JSON.parse(result.trim())
       setDialogueAndVocabulary({
         dialogue: parsedDialogue.dialogue,
         vocabulary: parsedDialogue.vocabulary || []
       })
       setRolename(parsedDialogue.rolename)
-    
-      // 清空输入
-      setUserDialogueInput('')
-      setPrompt('')
+      
+      // 关闭提示词展示组件
+      setShowPrompt(false)
     } catch (error) {
       alert('对话格式不正确，请确保输入的是有效的JSON格式')
       console.error('解析对话失败:', error)
@@ -101,8 +96,8 @@ export default function SceneInput() {
         <input
           id="scene-input"
           type="text"
-          value={scene}
-          onChange={(e) => setScene(e.target.value)}
+          value={currentScene}
+          onChange={(e) => setCurrentScene(e.target.value)}
           placeholder="例如：咖啡店点餐"
           className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
           disabled={isLoading}
@@ -116,45 +111,13 @@ export default function SceneInput() {
         </button>
       </div>
 
-      {/* 提示词模式下的提示词显示和对话输入 */}
-      {mode === 'prompt' && prompt && (
-        <div className="mt-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">提示词</h3>
-          <div className="bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md p-3 mb-4 overflow-x-auto">
-            <pre className="text-sm text-gray-800 dark:text-white whitespace-pre-wrap">{prompt}</pre>
-          </div>
-          
-          <div className="mb-2">
-            <button
-              onClick={async () => {
-                await navigator.clipboard.writeText(prompt);
-                // 显示复制成功提示
-                alert('复制成功');
-              }}
-              className="px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
-            >
-              复制提示词
-            </button>
-          </div>
-          
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              请在其他AI平台获取对话后粘贴到此处
-            </label>
-            <textarea
-              value={userDialogueInput}
-              onChange={(e) => setUserDialogueInput(e.target.value)}
-              placeholder='例如：[{"role": "A", "text": "Hello!\n你好！"}, {"role": "B", "text": "Hi there!\n你好！"}]'
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3 min-h-[150px] bg-white dark:bg-gray-900 text-gray-800 dark:text-white"
-            />
-            <button
-              onClick={handleManualDialogueSubmit}
-              className="px-4 py-2 bg-green-600 text-white rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
-            >
-              提交对话
-            </button>
-          </div>
-        </div>
+      {/* 提示词展示组件 */}
+      {showPrompt && (
+        <PromptDisplay
+          prompt={generatedPrompt}
+          onSubmit={handlePromptSubmit}
+          onClose={() => setShowPrompt(false)}
+        />
       )}
     </div>
   )
