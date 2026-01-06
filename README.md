@@ -9,13 +9,27 @@
 leancloud
 
 任务
-1.走通整个学习流程
-缺点：
-答题时可以enter提交
-按空格可以切换到下一个单词输入框
-姓名不需要比较
-
-
+1.走通整个学习流程（完成）
 2.单词学习与记录的过程，改为从错误的句子中获取，最后让AI整理，然后输入到单词表
+AI整理错误句子。
+    
+    1.在PracticeFlow中，diff中添加用户输入的错误单词，格式如下
+    {
+        "type": "word",
+        "word": "That's",
+        "correct": false,
+        "userInput": "That's"
+    },
+    2.在markDifferencesByWord中，除了 ' 之外的标点，提出出来，作为单独的一项。标点提取从原句中提取，格式见下面json，同样放在diff数组中。
+    {
+        "type": "punctuation",
+        "value": "."
+    }
+    3.在SceneInput中，将scene变量，放在useDialogueStore中
+    4.在PracticeResult中，将退出练习按钮，改为完成按钮
+    在提示词模式下，点击完成按钮，将使用generateResultAnalyzPrompt和reviewQueue生成分析提示词，然后显示提示词展示组件。
+    在正常模式下，点击完成按钮，访问新的api路由，将reviewQueue中diff的部分和scene作为参数，发送给后端。后端在这个新的api路由中，根据diff和scene使用generateResultAnalyzPrompt生成分析提示词，用提示词调用ai的 api，获取分析结果返回前端。可以参考generate-dialogue的api路由的实现。
+    5.新增提示词展示组件，其中包含了提示词展示输入框，用来展示提示词 和 分析结果输入框，用来提交分析结果
+    6.在SceneInput中，同样有提示词模式，改为使用提示词展示组件
 3.对话创建依据，现在是根据用户关键词创建，但是存在对话过于浅显的问题
 4.添加语音相关练习

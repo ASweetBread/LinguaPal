@@ -64,6 +64,21 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, wordIndex: number) => {
+    // 处理空格键切换到下一个单词
+    if (e.key === ' ') {
+      e.preventDefault()
+      const totalWords = segments.filter(s => s.type === 'word').length
+      if (wordIndex < totalWords - 1) {
+        const nextIndex = wordIndex + 1
+        const nextInput = inputRefs.current[nextIndex]
+        if (nextInput) {
+          nextInput.focus()
+        }
+      }
+      return
+    }
+    
+    // 处理退格键
     if (e.key === 'Backspace' && !e.currentTarget.value && wordIndex > 0) {
       e.preventDefault()
       const prevIndex = wordIndex - 1
@@ -73,21 +88,43 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
         const length = prevInput.value.length
         prevInput.setSelectionRange(length, length)
       }
-    } else if (e.key === 'ArrowRight' && wordIndex < segments.filter(s => s.type === 'word').length - 1) {
-      e.preventDefault()
-      console.log('向右移动', wordIndex, e)
-      const nextIndex = wordIndex + 1
-      const nextInput = inputRefs.current[nextIndex]
-      if (nextInput) {
-        nextInput.focus()
+      return
+    }
+    
+    // 处理右箭头键
+    if (e.key === 'ArrowRight') {
+      const totalWords = segments.filter(s => s.type === 'word').length
+      const cursorPos = e.currentTarget.selectionStart
+      const inputValue = e.currentTarget.value
+      
+      // 只有当光标位于文本结尾且不是最后一个单词时，才切换到下一个输入框
+      if (cursorPos === inputValue.length && wordIndex < totalWords - 1) {
+        e.preventDefault()
+        const nextIndex = wordIndex + 1
+        const nextInput = inputRefs.current[nextIndex]
+        if (nextInput) {
+          nextInput.focus()
+        }
       }
-    } else if (e.key === 'ArrowLeft' && wordIndex > 0) {
-      e.preventDefault()
-      const prevIndex = wordIndex - 1
-      const prevInput = inputRefs.current[prevIndex]
-      if (prevInput) {
-        prevInput.focus()
+      return
+    }
+    
+    // 处理左箭头键
+    if (e.key === 'ArrowLeft') {
+      const cursorPos = e.currentTarget.selectionStart
+      
+      // 只有当光标位于文本开头且不是第一个单词时，才切换到上一个输入框
+      if (cursorPos === 0 && wordIndex > 0) {
+        e.preventDefault()
+        const prevIndex = wordIndex - 1
+        const prevInput = inputRefs.current[prevIndex]
+        if (prevInput) {
+          prevInput.focus()
+          const length = prevInput.value.length
+          prevInput.setSelectionRange(length, length)
+        }
       }
+      return
     }
   }
 

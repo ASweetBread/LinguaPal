@@ -2,15 +2,23 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { DialogueItem, VocabularyItem } from '../types/dialogue';
 
+// 定义角色名称类型
+interface RoleName {
+  role: string;
+  name: string;
+}
+
 // 定义生成对话模块的状态类型
 export interface DialogueState {
   dialogue: DialogueItem[];
+  rolename: RoleName[];
   vocabulary: VocabularyItem[];
   currentScene: string;
   currentSentenceIndex: number;
   isLoading: boolean;
   showPractice: boolean;
   setDialogue: (dialogue: DialogueItem[]) => void;
+  setRolename: (rolename: RoleName[]) => void;
   setVocabulary: (vocabulary: VocabularyItem[]) => void;
   setDialogueAndVocabulary: (data: { dialogue: DialogueItem[]; vocabulary: VocabularyItem[] }) => void;
   setCurrentScene: (scene: string) => void;
@@ -30,6 +38,10 @@ export const useDialogueStore = create<DialogueState>()(
   // ),
   (set) => ({
     dialogue: [],
+    rolename: [
+      // { "role": "A", "name": "" },
+      // { "role": "B", "name": "" }
+    ],
     vocabulary: [],
     currentScene: "",
     currentSentenceIndex: -1,
@@ -38,6 +50,10 @@ export const useDialogueStore = create<DialogueState>()(
     setDialogue: (dialogue) =>
       set(() => ({
         dialogue,
+      })),
+    setRolename: (rolename) =>
+      set(() => ({
+        rolename,
       })),
     setVocabulary: (vocabulary) =>
       set(() => ({

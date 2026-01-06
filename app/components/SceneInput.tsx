@@ -8,7 +8,7 @@ export default function SceneInput() {
   const [scene, setScene] = useState('')
   const [prompt, setPrompt] = useState('')
   const [userDialogueInput, setUserDialogueInput] = useState('')
-  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary } = useDialogueStore()
+  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename } = useDialogueStore()
   const { mode, aiServices, dialogueConfig, currentLevel, vocabularyAbility } = useUserConfigStore()
   const { userId } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
@@ -57,6 +57,7 @@ export default function SceneInput() {
             dialogue: data.dialogue,
             vocabulary: data.vocabulary || []
           })
+          setRolename(data.rolename)
         }
       }
     } catch (error) {
@@ -80,6 +81,8 @@ export default function SceneInput() {
         dialogue: parsedDialogue.dialogue,
         vocabulary: parsedDialogue.vocabulary || []
       })
+      setRolename(parsedDialogue.rolename)
+    
       // 清空输入
       setUserDialogueInput('')
       setPrompt('')

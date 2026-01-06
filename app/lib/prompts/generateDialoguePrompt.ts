@@ -23,6 +23,10 @@ export const SYSTEM_PROMPT = (scene: string, newWordsPercent: string, masteryLev
   "vocabulary": [
     { id: "单词id(来自用户单词本，没有则为空)", "word": "生词", "phonetic": "音标（如适用）", "meanings": "含义（所有${userLanguage}含义）", "partOfSpeech": "词性", "phrase": "所属短语（如果来自短语）", "phraseMeaning": "短语${userLanguage}含义（如果适用）" },
     ... // 列出对话中出现的生词（基于用户单词本中mastery较低的部分），每个生词一个对象
+  ],
+  "rolename": [
+    { "role": "A", "name": "A的姓名" },
+    { "role": "B", "name": "B的姓名" }
   ]
 }
 JSON说明：

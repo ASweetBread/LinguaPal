@@ -1,5 +1,6 @@
 import { SYSTEM_PROMPT } from './generateDialoguePrompt';
 import { VOCABULARY_PROMPT } from './vocabularyTestPrompt';
+import { RESULT_ANALYZ_PROMPT } from './resultAnalyzPrompt';
 
 /**
  * 生成对话提示词的函数
@@ -15,4 +16,8 @@ export const generateVocabularyPrompt = (additionalText: string): string => {
     additionalText = '无';
   }
   return VOCABULARY_PROMPT(additionalText);
+}
+
+export const generateResultAnalyzPrompt = (data: string, scene: string): string => {
+  return RESULT_ANALYZ_PROMPT(data, scene);
 }

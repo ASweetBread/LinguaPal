@@ -23,7 +23,7 @@ type ReviewItem = {
 }
 
 export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
-  const { dialogue, vocabulary, updateVocabularyErrorCount, setShowPractice } = useDialogueStore()
+  const { dialogue, vocabulary, rolename, updateVocabularyErrorCount, setShowPractice } = useDialogueStore()
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [current, setCurrent] = useState(0)
@@ -33,6 +33,19 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [lastDiff, setLastDiff] = useState<{ word: string; correct: boolean }[]>([])
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
+
+  // 添加整体的Enter键监听
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && !showResult) {
+        e.preventDefault()
+        onSubmit()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   const buildTasksForRole = (role: 'A' | 'B') => {
     const res: Task[] = []
@@ -70,6 +83,9 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   }, [dialogue])
 
   const currentTask = tasks[current]
+  
+  // 从rolename中提取角色名称数组
+  const rolenames = rolename.map(item => item.name).filter(name => name !== '')
 
   const onSubmit = () => {
     if (!currentTask) return
@@ -78,7 +94,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
 
     const correct = isInputCorrect(ref, input)
     const similarity = calculateSimilarity(ref, input)
-    const diff = markDifferencesByWord(ref, input)
+    const diff = markDifferencesByWord(ref, input, rolenames)
 
     setLastDiff(diff)
     setLastResultCorrect(correct)
@@ -218,17 +234,17 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
               onClick={() => {
                 setShowResult(true)
                 setLastResultCorrect(null)
-                setLastDiff(markDifferencesByWord(targetText, userInput))
+                setLastDiff(markDifferencesByWord(targetText, userInput, rolenames))
               }}
               className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
-            >显示参考答案</button>
+            >显示答案</button>
           </div>
         )}
 
         {showResult && (
           <div className="mt-4">
             <div className={`p-3 rounded ${lastResultCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-              <div className="text-sm font-medium mb-2">参考句（已标注差异）：</div>
+              <div className="text-sm font-medium mb-2">原句（已标注差异）：</div>
               <div className="text-gray-800 dark:text-gray-200">
                 {lastDiff.map((seg, idx) => (
                   <span
@@ -266,7 +282,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
                     const reviewItem: ReviewItem = {
                       promptIndex: currentTask.promptIndex,
                       targetIndex: currentTask.targetIndex,
-                      diff: markDifferencesByWord(targetText, userInput || targetText),
+                      diff: markDifferencesByWord(targetText, userInput || targetText, rolenames),
                       passed: true,
                       userInput: userInput || targetText
                     }

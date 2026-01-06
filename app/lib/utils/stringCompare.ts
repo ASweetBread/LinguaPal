@@ -48,13 +48,16 @@ export const calculateSimilarity = (str1: string, str2: string): number => {
 
 // 基于词的LCS以标注参考句中哪些词是匹配的（用于高亮原句的差异）
 // 返回参考句的词数组，每个项包含 { word, correct: boolean }
-export const markDifferencesByWord = (reference: string, input: string) => {
+export const markDifferencesByWord = (reference: string, input: string, rolenames: string[] = []) => {
   const refWords = reference.split(/\s+/).filter(Boolean)
   const inWords = input.split(/\s+/).filter(Boolean)
 
   // 标准化后的单词数组，用于比较
   const normRefWords = refWords.map(word => normalizeString(word))
   const normInWords = inWords.map(word => normalizeString(word))
+  
+  // 标准化后的角色名称数组
+  const normRolenames = rolenames.map(name => normalizeString(name))
 
   const m = refWords.length
   const n = inWords.length
@@ -83,7 +86,14 @@ export const markDifferencesByWord = (reference: string, input: string) => {
     else j--
   }
 
-  return refWords.map((w, idx) => ({ word: w, correct: matches.has(idx) }))
+  return refWords.map((w, idx) => {
+    // 如果单词是rolename中的name，则correct固定为true
+    const normWord = normalizeString(w)
+    if (normRolenames.includes(normWord)) {
+      return { word: w, correct: true }
+    }
+    return { word: w, correct: matches.has(idx) }
+  })
 }
 
 // 判断输入是否“通过”参考句（默认严格比较 normalize 后相等）
