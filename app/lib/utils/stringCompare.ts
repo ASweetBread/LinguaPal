@@ -52,7 +52,7 @@ export const markDifferencesByWord = (reference: string, input: string, rolename
   // 提取单词和标点符号，保留顺序
   const tokens = reference.match(/\b\w+(?:'\w+)?\b|[^\w\s]+/g) || []
   const inputTokens = input.match(/\b\w+(?:'\w+)?\b|[^\w\s]+/g) || []
-
+  const inputWords = input.split(',')
   // 分离单词和标点符号，用于比较
   const refWords = tokens.filter(token => /^\b\w+(?:'\w+)?\b$/.test(token))
   const inWords = inputTokens.filter(token => /^\b\w+(?:'\w+)?\b$/.test(token))
@@ -60,6 +60,7 @@ export const markDifferencesByWord = (reference: string, input: string, rolename
   // 标准化后的单词数组，用于比较
   const normRefWords = refWords.map(word => normalizeString(word))
   const normInWords = inWords.map(word => normalizeString(word))
+  console.log(normRefWords, inputWords)
   
   // 标准化后的角色名称数组
   const normRolenames = rolenames.map(name => normalizeString(name))
@@ -100,18 +101,12 @@ export const markDifferencesByWord = (reference: string, input: string, rolename
       // 处理单词
       const normWord = normalizeString(token)
       const isCorrect = normRolenames.includes(normWord) || matches.has(wordIndex)
-      
-      // 找到对应的用户输入单词
-      let userInputWord = ''
-      if (!isCorrect && wordIndex < inWords.length) {
-        userInputWord = inWords[wordIndex]
-      }
 
       result.push({
         type: 'word',
         word: token,
         correct: isCorrect,
-        userInput: userInputWord
+        userInput: inputWords[wordIndex] || '___'
       })
       wordIndex++
     } else {

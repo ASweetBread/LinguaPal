@@ -36,18 +36,24 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
 
-  // 添加整体的Enter键监听
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && !showResult) {
-        e.preventDefault()
-        onSubmit()
-      }
-    }
+  const handleGlobalKeyDown = (e: KeyboardEvent) => {
+    console.log('Enter key pressed, showResult:', e.key)
+    if(e.key !== 'Enter') return
+    console.log('Enter key pressed, showResult:', showResult)
+    e.preventDefault()
+    showResult ? onNext() : onSubmit()
+  }
 
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [])
+  React.useEffect(() => {
+    // 添加全局键盘事件监听器
+    window.addEventListener('keydown', handleGlobalKeyDown)
+    console.log('keydown event listener added')
+    // 清理函数
+    return () => {
+      window.removeEventListener('keydown', handleGlobalKeyDown)
+      console.log('keydown event listener removed')
+    }
+  }, [showResult])
 
   const buildTasksForRole = (role: 'A' | 'B') => {
     const res: Task[] = []
@@ -96,7 +102,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
 
     const correct = isInputCorrect(ref, input)
     const similarity = calculateSimilarity(ref, input)
-    const diff = markDifferencesByWord(ref, input, rolenames)
+    const diff = markDifferencesByWord(ref, userInput, rolenames)
 
     setLastDiff(diff)
     setLastResultCorrect(correct)
@@ -271,12 +277,12 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
               </div>
             </div>
 
-            {!lastResultCorrect && (
+            {/* {!lastResultCorrect && (
               <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
                 <span className="font-medium">你的输入：</span>
-                {userInput || <em className="text-gray-400">（空）</em>}
+                { lastDiff.map(seg => seg.userInput || seg.value).join(' ') || <em className="text-gray-400">（空）</em>}
               </div>
-            )}
+            )} */}
 
             <div className="mt-3 flex gap-2">
               <button 

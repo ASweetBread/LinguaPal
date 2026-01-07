@@ -56,11 +56,12 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   const userWords = parseUserInput(value)
 
   const handleWordChange = (wordIndex: number, newWord: string) => {
+    const totalWords = segments.filter(s => s.type === 'word')
+    updateWordWidth(totalWords[wordIndex], newWord)
     const newWords = [...userWords]
     newWords[wordIndex] = newWord
     const newValue = newWords.join(',')
     onChange(newValue)
-    updateWordWidth()
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, wordIndex: number) => {
@@ -147,21 +148,25 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     return `${finalWidth}px`
   }
 
-  function updateWordWidth() {
+  function updateWordWidth(segment: WordSegment, word: string) {
+    const dynamicWidth = getInputWidth(segment.content, word)
+    const input = inputRefs.current[segment.index]
+    if (input) {
+      input.style.width = dynamicWidth
+    }
+  }
+
+  function updateAllWordWidth() {
     segments.forEach((segment, idx) => {
       if (segment.type === 'word') {
         const userWord = userWords[segment.index] || ''
-        const dynamicWidth = getInputWidth(segment.content, userWord)
-        const input = inputRefs.current[segment.index]
-        if (input) {
-          input.style.width = dynamicWidth
-        }
+        updateWordWidth(segment, userWord)
       }
     })
   }
 
   useLayoutEffect(() => {
-    updateWordWidth()
+    updateAllWordWidth()
   }, [targetText])
 
   return (
