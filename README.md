@@ -33,3 +33,18 @@ AI整理错误句子。
     6.在SceneInput中，同样有提示词模式，改为使用提示词展示组件
 3.对话创建依据，现在是根据用户关键词创建，但是存在对话过于浅显的问题
 4.添加语音相关练习
+
+
+开发记录
+tailwind bug记录 使用oklch的时候，bg-secondary/80 无法生效，需要在tailwind.config.js中添加
+```
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        secondary: 'oklch(var(--secondary) / <alpha-value>)',
+      }
+    }
+  }
+}
+```

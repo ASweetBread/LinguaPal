@@ -1,6 +1,7 @@
 'use client'
 import type { Metadata } from 'next'
 import './globals.css'
+import './component.css'
 import { useEffect, useState } from 'react'
 import { useAppConfigStore, useUserConfigStore, useUserInfoStore } from '@/app/store'
 import { Toaster } from '@/components/ui/toaster'
