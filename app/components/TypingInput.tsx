@@ -165,6 +165,10 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     })
   }
 
+  useEffect(() => {
+    !disabled && inputRefs.current[0]?.focus()
+  }, [disabled])
+
   useLayoutEffect(() => {
     updateAllWordWidth()
   }, [targetText])

@@ -35,25 +35,30 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [lastDiff, setLastDiff] = useState<diffType>([])
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
+  const currentHandler: React.MutableRefObject<((e: KeyboardEvent) => void) | null> = React.useRef(null)
 
   const handleGlobalKeyDown = (e: KeyboardEvent) => {
-    console.log('Enter key pressed, showResult:', e.key)
     if(e.key !== 'Enter') return
-    console.log('Enter key pressed, showResult:', showResult)
     e.preventDefault()
     showResult ? onNext() : onSubmit()
   }
+  
+  useEffect(() => {
+    currentHandler.current = handleGlobalKeyDown
+  })
 
   React.useEffect(() => {
+    function handler (e: KeyboardEvent) {
+      if (!currentHandler.current) return
+      currentHandler.current(e)
+    }
     // 添加全局键盘事件监听器
-    window.addEventListener('keydown', handleGlobalKeyDown)
-    console.log('keydown event listener added')
+    window.addEventListener('keydown', handler)
     // 清理函数
     return () => {
-      window.removeEventListener('keydown', handleGlobalKeyDown)
-      console.log('keydown event listener removed')
+      window.removeEventListener('keydown', handler)
     }
-  }, [showResult])
+  }, [])
 
   const buildTasksForRole = (role: 'A' | 'B') => {
     const res: Task[] = []
@@ -91,7 +96,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   }, [dialogue])
 
   const currentTask = tasks[current]
-  
   // 从rolename中提取角色名称数组
   const rolenames = rolename.map(item => item.name).filter(name => name !== '')
 
@@ -103,7 +107,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     const correct = isInputCorrect(ref, input)
     const similarity = calculateSimilarity(ref, input)
     const diff = markDifferencesByWord(ref, userInput, rolenames)
-
     setLastDiff(diff)
     setLastResultCorrect(correct)
     setShowResult(true)
