@@ -4,40 +4,22 @@ import { apiRequest } from '../apiWrapper'
 import { textAIServices } from '@/config/ai-services'
 
 interface AnalysisRequest {
-  diffs: Array<{
-    type: string
-    word?: string
-    correct?: boolean
-    userInput?: string
-    value?: string
-  }>[]
+  analysisData: string
   scene: string
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body: AnalysisRequest = await request.json()
-    const { diffs, scene } = body
+    const { analysisData, scene } = body
 
     // 验证请求数据
-    if (!diffs || !Array.isArray(diffs) || !scene) {
+    if (analysisData || !scene) {
       return NextResponse.json(
         { error: 'Invalid request data' },
         { status: 400 }
       )
     }
-
-    // 构建分析数据
-    const analysisData = JSON.stringify(diffs.map((diff, index) => ({
-      diff: diff.filter(seg => seg.type === 'word' && !seg.correct).map(seg => ({
-        word: seg.word,
-        correct: seg.correct,
-        userInput: seg.userInput
-      })),
-      // 这里假设前端会在每个diff项中包含sentence信息
-      // 如果没有，可能需要从其他地方获取
-      userInput: diff.find(seg => seg.type === 'word' && seg.userInput)?.userInput || ''
-    })))
 
     // 生成分析提示词
     const prompt = RESULT_ANALYZ_PROMPT(analysisData, scene)

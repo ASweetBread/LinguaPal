@@ -49,6 +49,8 @@ export default function PracticeResult({
   const { mode } = useUserConfigStore()
   const [showPrompt, setShowPrompt] = useState(false)
   const [analysisPrompt, setAnalysisPrompt] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const totalTasks = reviewQueue.length
   const passedTasks = reviewQueue.filter(item => item.passed).length
@@ -56,31 +58,60 @@ export default function PracticeResult({
 
   const incorrectWords = vocabulary.filter(v => (v.errorCount || 0) > 0)
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
+    const analysisData = reviewQueue.map(item => ({
+      diff: item.diff.filter(seg => seg.type === 'word' && !seg.correct).map(seg => ({
+        word: seg.word,
+        correct: seg.correct,
+        userInput: seg.userInput
+      })),
+      sentence: item.diff.map(seg => seg.word || seg.value).join(' '),
+      userInput: item.diff.map(seg => seg.userInput || seg.value || '___').join(' ')
+    }))
+    if(!analysisData.find(item => item.diff.length > 0)){
+      onExit()
+      return
+    }
     if (mode === 'prompt') {
       // 提示词模式：生成分析提示词并显示
-      const analysisData = JSON.stringify(reviewQueue.map(item => ({
-        diff: item.diff.filter(seg => seg.type === 'word' && !seg.correct).map(seg => ({
-          word: seg.word,
-          correct: seg.correct,
-          userInput: seg.userInput
-        })),
-        sentence: dialogue[item.targetIndex]?.text || '',
-        userInput: item.userInput
-      })))
       
-      const prompt = RESULT_ANALYZ_PROMPT(analysisData, currentScene)
+      
+      const prompt = RESULT_ANALYZ_PROMPT(JSON.stringify(analysisData), currentScene)
       setAnalysisPrompt(prompt)
       setShowPrompt(true)
     } else {
-      // 正常模式：访问新的API路由，将reviewQueue中diff的部分和scene作为参数
-      // 这里需要实现API调用逻辑
-      console.log('Normal mode: Sending data to backend', {
-        diffs: reviewQueue.map(item => item.diff),
-        scene: currentScene
-      })
-      // 调用API后退出
-      onExit()
+      setLoading(true)
+      setError('')
+      
+      try {
+        const response = await fetch('/api/practice-analysis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            analysisData: JSON.stringify(analysisData),
+            scene: currentScene
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error('API调用失败')
+        }
+        
+        const data = await response.json()
+        console.log('Analysis result:', data)
+        
+        // 调用onExit并传递分析结果
+        onExit()
+        // 这里可以根据需求处理分析结果，比如保存到localStorage或者展示给用户
+        // 由于需求中没有明确要求在正常模式下展示分析结果，所以直接退出
+      } catch (err) {
+        console.error('API调用错误:', err)
+        setError('分析结果获取失败，请稍后重试')
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -255,6 +286,47 @@ export default function PracticeResult({
             </div>
           </CardContent>
         </Card>
+        )}
+        {showPrompt && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-4xl mx-auto">
+            <PromptDisplay
+              prompt={analysisPrompt}
+              onSubmit={handlePromptSubmit}
+              onClose={() => setShowPrompt(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-md mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-red-500 mb-4">{error}</div>
+                <Button onClick={() => setError('')} className="w-full">
+                  关闭
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="w-full max-w-md mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600 dark:text-gray-300">正在分析练习结果...</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
     </div>
   )
