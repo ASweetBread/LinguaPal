@@ -13,7 +13,7 @@
  * @param keyword 
  * @returns 
  */
-export const RESULT_ANALYZ_PROMPT = (data: string, scene: string) => `
+export const RESULT_ANALYZ_PROMPT = (data: string, keyword: string) => `
 你是一个专业的语言学习诊断专家，擅长通过错误分析快速识别学习者的知识盲点。请根据提供的用户回答与原句的对比数据，进行高效分析。
 
 **核心分析原则：**
@@ -30,12 +30,10 @@ export const RESULT_ANALYZ_PROMPT = (data: string, scene: string) => `
 **待分析的数据：**
 ${data}
 
-**当前对话场景：** ${scene}
-
 **请按照以下JSON格式输出分析结果：**
 [
   [
-    {"word": "原正确单词", "errorType": "分析结果"}
+    {"word": "原正确单词", "errorType": "分析结果", "phonetic": "音标（如适用）", "meanings": "含义（所有含义）", "partOfSpeech": "词性", "phrase": "所属短语（该词在原句中所在的短语，没有则为空）", "phraseMeaning": "短语含义（如果适用）"}
   ]
 ]
 **JSON格式说明：**

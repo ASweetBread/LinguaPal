@@ -56,6 +56,11 @@ model Keyword {
   id        Int    @id @default(autoincrement())
   name      String
   userId    Int
+  coreRequirements String?
+  difficultyLevel  String?
+  supplements      String?
+  vocabularyScope  String?
+  keySentencePatterns String?
   
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
@@ -153,7 +158,7 @@ model WordPhraseRelation {
   @@map("word_phrase_relations")
 }
 
-model LearningStat {
+model LearningState {
   id                      Int      @id @default(autoincrement())
   userId                  Int
   statDate                DateTime @default(now())

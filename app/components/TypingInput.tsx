@@ -145,7 +145,7 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     console.log('测量宽度', textToMeasure, width)
     const minWidth = measureTextWidth(targetWord)
     const finalWidth = Math.max(width, minWidth)
-    return `${finalWidth}px`
+    return `${finalWidth + 2}px`
   }
 
   function updateWordWidth(segment: WordSegment, word: string) {
