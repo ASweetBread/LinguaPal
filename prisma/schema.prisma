@@ -24,7 +24,7 @@ model User {
   words        Word[]
   phrases      Phrase[]
   phraseMeanings PhraseMeaning[]
-  learningStates LearningState[]
+  learningStats LearningStat[]
   reviewDetails TodayReviewDetail[]
   config       Config?
   
@@ -173,7 +173,7 @@ model WordPhraseRelation {
   @@map("word_phrase_relations")
 }
 
-model LearningState {
+model LearningStat {
   id                      Int      @id @default(autoincrement())
   userId                  Int
   statDate                DateTime @default(now())
