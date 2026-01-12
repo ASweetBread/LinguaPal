@@ -62,7 +62,7 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
 
 用户将提供：
 - 用户的单词本（可能为空）。包含短语列表、每个短语的含义，以及用户对这些短语含义的掌握程度（例如：生词、已掌握单词）。
-- 用户输入的英语学习目标：前端程序员面试
+- 用户输入的英语学习目标：
 "核心诉求": "",
 "英语等级": "",
 "侧重补充": "",
@@ -78,7 +78,7 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
 4. 对话可以训练用户的核心诉求，句型属于用户提供的句型重点中的类型。
 训练核心诉求以内容深度优先，如果核心诉求范围广，无法在一轮对话中完全满足，那么只挑选其中一部分核心诉求来生成对话。
 挑选部分核心诉求的逻辑如下（严格二选一）
-  当核心诉求已训练范围没有包含全部的核心诉求时，说明用户之前没有训练过核心诉求，那么直接从核心诉求中挑选一部分核心诉求来生成对话，并在返回json中（alreadyTrainedScope）标注本次生产的对话的涵盖的核心诉求范围，isFullTrained标注为false。
+  当核心诉求已训练范围没有包含全部的核心诉求时，说明用户之前没有训练过核心诉求，那么直接从核心诉求中挑选一部分核心诉求来生成对话，并在alreadyTrainedScope标注本次生产的对话的涵盖的核心诉求范围（字符串结构），isFullTrained标注为false。
   当核心诉求已训练范围包含了全部的核心诉求时，说明用户之前训练过核心诉求，那么按照提供的核心诉求已训练范围索引，从核心诉求已训练范围取出索引对应的核心诉求范围，作为本次训练的核心诉求范围，alreadyTrainedScope置空，isFullTrained标注为true。
 
 返回格式必须是一个 JSON 对象，结构如下：
@@ -114,7 +114,7 @@ rolename中存放对话中出现的角色名称。如果对话中没有角色名
 "侧重补充": "${supplementFocus}",
 "词汇范围": "${vocabularyRange}",
 "句型重点": "${sentenceStructureFocus}"
-"核心诉求已训练范围": [${alreadyTrainedScopes}],
+"核心诉求已训练范围": ${alreadyTrainedScopes},
 "核心诉求已训练范围索引": "${alreadyTrainedScopeIndex}"
 `;
 
