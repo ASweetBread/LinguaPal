@@ -8,14 +8,26 @@ export async function generateDialogue(
   dialogueConfig?: { newWordRatio: number; familiarWordLevel: number },
   userId?: string,
   currentLevel?: string,
-  vocabularyAbility?: string
+  vocabularyAbility?: string,
+  alreadyTrainedScope?: string[],
+  alreadyTrainedScopeIndex?: number | undefined | null
 ) {
   return clientFetch('/api/generate-dialogue', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ scene, mode, aiService, dialogueConfig, userId, currentLevel, vocabularyAbility }),
+    body: JSON.stringify({ 
+      scene, 
+      mode, 
+      aiService, 
+      dialogueConfig, 
+      userId, 
+      currentLevel, 
+      vocabularyAbility,
+      alreadyTrainedScope,
+      alreadyTrainedScopeIndex
+    }),
     name: 'generate-dialogue-client',
   });
 }

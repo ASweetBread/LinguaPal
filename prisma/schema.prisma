@@ -24,7 +24,7 @@ model User {
   words        Word[]
   phrases      Phrase[]
   phraseMeanings PhraseMeaning[]
-  learningStats LearningStat[]
+  learningStates LearningState[]
   reviewDetails TodayReviewDetail[]
   config       Config?
   
@@ -51,7 +51,9 @@ model Config {
   
   @@map("configs")
 }
-
+/**
+ * 英语学习目标，有空将keyword改为keyTarget
+ */
 model Keyword {
   id        Int    @id @default(autoincrement())
   name      String
@@ -61,11 +63,24 @@ model Keyword {
   supplements      String?
   vocabularyScope  String?
   keySentencePatterns String?
+  keywordScopesIndex  Int?
   
+  keywordScopes KeywordScope[]
+
   user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@unique([userId, name])
   @@map("keywords")
+}
+
+model KeywordScope {
+  id        Int    @id @default(autoincrement())
+  keywordId Int
+  scope     String
+  
+  keyword   Keyword @relation(fields: [keywordId], references: [id], onDelete: Cascade)
+  
+  @@map("keyword_scopes")
 }
 
 model ErrorRecord {

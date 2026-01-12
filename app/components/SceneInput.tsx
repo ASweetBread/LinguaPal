@@ -1,44 +1,122 @@
 'use client'
 import React, { useState } from 'react'
-import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore } from '@/app/store'
+import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore, useKeywordStore } from '@/app/store'
 import { generateDialogue } from '../lib/apiCalls';
-import { generateDialoguePrompt } from '../lib/prompts/generatePrompt';
+import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from '../lib/prompts/generatePrompt';
 import PromptDisplay from './PromptDisplay';
 
 export default function SceneInput() {
   const [showPrompt, setShowPrompt] = useState(false)
   const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [showKeywordPrompt, setShowKeywordPrompt] = useState(false)
+  const [keywordAnalysisPrompt, setKeywordAnalysisPrompt] = useState('')
   const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename, currentScene, setCurrentScene } = useDialogueStore()
   const { mode, aiServices, dialogueConfig, currentLevel, vocabularyAbility } = useUserConfigStore()
   const { userId } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
+  const { setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing } = useKeywordStore()
 
-  const handleGenerateDialogue = async () => {
+  // 分析关键字
+  const analyzeKeyword = async () => {
     if (!currentScene.trim()) {
       alert('请输入场景描述')
       return
     }
 
     try {
+      setIsAnalyzing(true)
+      setKeywordStoreAnalyzing(true)
+      
+      if (mode === 'prompt') {
+        // 提示词模式：直接生成分析提示词
+        const prompt = generateAnalysisKeywordPrompt(currentScene.trim())
+        setKeywordAnalysisPrompt(prompt)
+        setShowKeywordPrompt(true)
+      } else {
+        // 正常模式：调用API分析关键字
+        const response = await fetch('/api/analyze-keyword', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            keyword: currentScene.trim(),
+            mode: 'normal',
+            userId: userId || undefined,
+            aiService: aiServices.textAI
+          })
+        })
+
+        if (!response.ok) {
+          throw new Error('分析关键字失败')
+        }
+
+        const result = await response.json()
+        if (result.success) {
+          // 存储到keywordStore
+          const keywordData = {
+            keyword: result.data.keyword,
+            analysis: result.data.analysis
+          }
+          setCurrentKeyword(keywordData)
+          addKeywordToList(keywordData)
+          
+          // 继续生成对话
+          generateDialogueAfterAnalysis()
+        } else {
+          throw new Error(result.error || '分析关键字失败')
+        }
+      }
+    } catch (error) {
+      console.error('分析关键字时出错:', error)
+      alert('分析关键字失败，请稍后重试')
+    } finally {
+      setIsAnalyzing(false)
+      setKeywordStoreAnalyzing(false)
+    }
+  }
+
+  // 生成对话（在关键字分析完成后调用）
+  const generateDialogueAfterAnalysis = async () => {
+    try {
       setIsLoading(true)
       // 生成新对话前清空现有对话
       setDialogue([])
       
       if (mode === 'prompt') {
-        // 提示词模式：直接在客户端生成提示词，不调用后端API
+        // 提示词模式：直接在客户端生成提示词
         const vocabularyJson = JSON.stringify(vocabulary)
+        
+        // 从keywordStore获取当前关键字分析结果和已训练范围信息
+        const keywordStoreState = useKeywordStore.getState();
+        const keyword = keywordStoreState.currentKeyword;
+        const keywordAnalysis = keyword.analysis;
+        const alreadyTrainedScope = keywordStoreState.alreadyTrainedScope;
+        const alreadyTrainedScopeIndex = keywordStoreState.alreadyTrainedScopeIndex;
+        
         const prompt = generateDialoguePrompt(
           currentScene.trim(),
           dialogueConfig.newWordRatio.toString(),
           dialogueConfig.familiarWordLevel,
           currentLevel,
           vocabularyAbility,
-          vocabularyJson
+          vocabularyJson,
+          // 新增参数
+          '中文', // userLanguage
+          keywordAnalysis, // 传递关键字分析结果
+          JSON.stringify(alreadyTrainedScope), // 传递已训练范围
+          alreadyTrainedScopeIndex // 传递已训练范围索引
         )
         setGeneratedPrompt(prompt)
         setShowPrompt(true)
       } else {
         // 正常模式：调用后端API生成对话
+        // 从keywordStore获取已训练范围信息
+        const keywordStoreState = useKeywordStore.getState();
+        const alreadyTrainedScope = keywordStoreState.alreadyTrainedScope;
+        const alreadyTrainedScopeIndex = keywordStoreState.alreadyTrainedScopeIndex;
+        
         const data = await generateDialogue(
           currentScene.trim(), 
           mode, 
@@ -46,7 +124,9 @@ export default function SceneInput() {
           dialogueConfig,
           userId,
           currentLevel,
-          vocabularyAbility
+          vocabularyAbility,
+          alreadyTrainedScope,
+          alreadyTrainedScopeIndex
         )
 
         console.log('生成的结果:', data)
@@ -58,6 +138,50 @@ export default function SceneInput() {
             vocabulary: data.vocabulary || []
           })
           setRolename(data.rolename)
+          
+          // 处理API返回的已训练范围和全训练状态
+          const alreadyTrainedScope = data.alreadyTrainedScope;
+          const isFullTrained = data.isFullTrained;
+          
+          // 如果有用户ID和已训练范围信息，存储到数据库
+          if (userId && alreadyTrainedScope !== undefined) {
+            try {
+              await fetch('/api/keyword-scope', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  userId: parseInt(userId),
+                  keywordName: currentScene.trim(),
+                  alreadyTrainedScope,
+                  isFullTrained: isFullTrained || false
+                })
+              })
+              
+              // 根据isFullTrained状态更新keyWordStore
+              if (isFullTrained) {
+                useKeywordStore.getState().setAlreadyTrainedScopeIndex(0);
+              } else {
+                // 如果不是全训练状态，保留当前索引或递增
+                const currentIndex = useKeywordStore.getState().alreadyTrainedScopeIndex;
+                useKeywordStore.getState().setAlreadyTrainedScopeIndex(
+                  currentIndex !== undefined && currentIndex !== null ? currentIndex + 1 : 0
+                );
+              }
+              
+              // 更新已训练范围数组
+              if (alreadyTrainedScope) {
+                const currentScope = useKeywordStore.getState().alreadyTrainedScope;
+                useKeywordStore.getState().setAlreadyTrainedScope([
+                  ...currentScope,
+                  alreadyTrainedScope
+                ]);
+              }
+            } catch (error) {
+              console.error('存储关键字范围时出错:', error);
+            }
+          }
         }
       }
     } catch (error) {
@@ -66,6 +190,59 @@ export default function SceneInput() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // 处理关键字分析结果提交
+  const handleKeywordAnalysisSubmit = async (result: string) => {
+    try {
+      // 解析用户输入的分析结果
+      const analysis = JSON.parse(result.trim())
+      
+      // 构建关键字数据
+      const keywordData = {
+        keyword: currentScene.trim(),
+        analysis: {
+          coreRequirements: analysis.coreRequirements || '',
+          difficultyLevel: analysis.difficultyLevel || '',
+          supplements: analysis.supplements || analysis.supplementFocus || '',
+          vocabularyScope: analysis.vocabularyScope || analysis.vocabularyRange || '',
+          keySentencePatterns: analysis.keySentencePatterns || analysis.sentenceStructureFocus || ''
+        }
+      }
+      
+      // 存储到keywordStore
+      setCurrentKeyword(keywordData)
+      addKeywordToList(keywordData)
+      
+      // 关闭提示词展示组件
+      setShowKeywordPrompt(false)
+      
+      // 如果有用户ID，存储到数据库
+      if (userId) {
+        await fetch('/api/analyze-keyword', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ...keywordData,
+            userId: userId
+          })
+        })
+      }
+      
+      // 继续生成对话
+      generateDialogueAfterAnalysis()
+    } catch (error) {
+      alert('分析结果格式不正确，请确保输入的是有效的JSON格式')
+      console.error('解析分析结果失败:', error)
+    }
+  }
+
+  // 处理生成对话
+  const handleGenerateDialogue = async () => {
+    // 先分析关键字
+    await analyzeKeyword()
   }
 
   const handlePromptSubmit = (result: string) => {
@@ -104,10 +281,10 @@ export default function SceneInput() {
         />
         <button
           onClick={handleGenerateDialogue}
-          disabled={isLoading}
+          disabled={isLoading || isAnalyzing}
           className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? '生成中...' : '生成对话'}
+          {isAnalyzing ? '分析中...' : isLoading ? '生成中...' : '生成对话'}
         </button>
       </div>
 
@@ -117,6 +294,15 @@ export default function SceneInput() {
           prompt={generatedPrompt}
           onSubmit={handlePromptSubmit}
           onClose={() => setShowPrompt(false)}
+        />
+      )}
+
+      {/* 关键字分析提示词展示组件 */}
+      {showKeywordPrompt && (
+        <PromptDisplay
+          prompt={keywordAnalysisPrompt}
+          onSubmit={handleKeywordAnalysisSubmit}
+          onClose={() => setShowKeywordPrompt(false)}
         />
       )}
     </div>

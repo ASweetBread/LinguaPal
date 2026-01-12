@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardFooter, CardTitle, CardDescription }
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useDialogueStore, useUserConfigStore } from '@/app/store'
-import { RESULT_ANALYZ_PROMPT } from '../lib/prompts/resultAnalyzPrompt'
+import { generateResultAnalyzPrompt } from '../lib/prompts/generatePrompt'
 import PromptDisplay from './PromptDisplay'
 import type { VocabularyItem as DialogueVocabularyItem } from '@/app/types/dialogue'
 
@@ -76,7 +76,7 @@ export default function PracticeResult({
       // 提示词模式：生成分析提示词并显示
       
       
-      const prompt = RESULT_ANALYZ_PROMPT(JSON.stringify(analysisData), currentScene)
+      const prompt = generateResultAnalyzPrompt(JSON.stringify(analysisData), currentScene)
       setAnalysisPrompt(prompt)
       setShowPrompt(true)
     } else {

@@ -16,6 +16,8 @@ interface DialogueRequest {
   userId?: number
   currentLevel?: string
   vocabularyAbility?: string
+  alreadyTrainedScope?: string[]
+  alreadyTrainedScopeIndex?: number | undefined | null
 }
 
 // 定义响应数据接口
@@ -56,7 +58,9 @@ export const POST = async (request: Request) => {
       dialogueConfig = { newWordRatio: 30, familiarWordLevel: 3 },
       userId,
       currentLevel = "A1",
-      vocabularyAbility = "初级学习者"
+      vocabularyAbility = "初级学习者",
+      alreadyTrainedScope = [],
+      alreadyTrainedScopeIndex = undefined
     } = body as DialogueRequest
 
     if (!scene) {
@@ -88,7 +92,11 @@ export const POST = async (request: Request) => {
         dialogueConfig.familiarWordLevel,
         currentLevel,
         vocabularyAbility,
-        vocabularyJson
+        vocabularyJson,
+        '中文',
+        { coreRequirements: '', difficultyLevel: '', supplements: '', vocabularyScope: '', keySentencePatterns: '' },
+        JSON.stringify(alreadyTrainedScope),
+        alreadyTrainedScopeIndex
       )
       
       return NextResponse.json<DialogueResponse>({
@@ -114,7 +122,11 @@ export const POST = async (request: Request) => {
             dialogueConfig.familiarWordLevel,
             currentLevel,
             vocabularyAbility,
-            vocabularyJson
+            vocabularyJson,
+            '中文',
+            { coreRequirements: '', difficultyLevel: '', supplements: '', vocabularyScope: '', keySentencePatterns: '' },
+            JSON.stringify(alreadyTrainedScope),
+            alreadyTrainedScopeIndex
           )
         },
         {

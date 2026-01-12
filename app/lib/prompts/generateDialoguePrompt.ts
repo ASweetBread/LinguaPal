@@ -1,3 +1,13 @@
+/**
+ * 测试是否达到学习目标
+ * @param keyword 英语学习目标
+ * @param coreRequirements 
+ * @param difficultyLevel 
+ * @param supplementFocus 
+ * @param vocabularyRange 
+ * @param sentenceStructureFocus 
+ * @returns 
+ */
 export const TARGET_TEST_PROMPT = (keyword: string, coreRequirements: string, difficultyLevel: string, supplementFocus: string, vocabularyRange: string, sentenceStructureFocus: string) => 
 `请你作为专业的英语水平评测专家，基于用户的学习目标、达到目标需要掌握的词汇等级、学习目标的知识侧重补充、学习目标需要掌握的词汇、需要掌握的重点句型，提出一系列的问题来全面评测用户当前英语水平是否达到设定目标，并给出具体的评测结论、未达标项的原因分析以及针对性的提升建议。
 每次提出一个问题，用户给予回答。然后再提出下一个问题。直到掌握用户的真实英语水平。
@@ -16,7 +26,11 @@ export const TARGET_TEST_PROMPT = (keyword: string, coreRequirements: string, di
 提升建议需具备可操作性，对应未达标项给出具体的学习方法、练习方向和资源推荐。
 整体评测报告语言简洁、逻辑清晰，结构分明，便于用户理解和执行。
 `
-
+/**
+ * 拆分学习目标
+ * @param keyword 英语学习目标
+ * @returns 
+ */
 export const  ANALYSIS_KEYWORD_PROMPT = (keyword: string) => 
 `你是一位专业的英语教育规划师，拥有丰富的英语教学和学习目标拆解经验，擅长根据用户的个性化英语学习目标，精准拆分所需核心知识模块
 请严格按照以下步骤，基于用户输入的英语学习目标完成分析与生成工作，输出结构清晰、内容具体的结果：
@@ -41,7 +55,7 @@ export const  ANALYSIS_KEYWORD_PROMPT = (keyword: string) =>
 `
 
 /** AI生成对话提示词 */
-export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryLevel: number, currentLevel: string, vocabularyAbility: string, vocabulary?: string, userLanguage: string = '中文', coreRequirements: string, difficultyLevel: string, supplementFocus: string, vocabularyRange: string, sentenceStructureFocus: string)=>
+export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryLevel: number, currentLevel: string, vocabularyAbility: string, vocabulary: string, userLanguage: string = '中文', coreRequirements: string, difficultyLevel: string, supplementFocus: string, vocabularyRange: string, sentenceStructureFocus: string, alreadyTrainedScopes: string, alreadyTrainedScopeIndex: number = 0)=>
 `你是一个英语学习助手，擅长创建场景对话。请根据用户提供的场景和用户的单词本信息，生成一个自然、真实的英文对话。
 当前用户的词汇水平：${currentLevel}。
 用户的能力描述：${vocabularyAbility}
@@ -54,13 +68,18 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
 "侧重补充": "",
 "词汇范围": "",
 "句型重点": ""
-
+"核心诉求已训练范围": []
+"核心诉求已训练范围索引": ""
 
 你的任务是：
 1. 基于提供的场景，创建一个包含6-10个对话回合的英文对话。对话在两个角色A和B之间进行，使用角色名称A和B。
 2. 在生成对话时，参照用户的单词本信息优先融入掌握比例较低的短语对应的含义（例如熟练度< ${masteryLevel}），同时融入单词本中不存在的生词，生词需要满足在目标词汇水平并且在用户提供 词汇范围 内，生词的比例不超过对话总词汇的${newWordsPercent}%，其他词汇满足用户的当前词汇水平，确保对话自然。每个对话回合应尽可能包含至少一个生词或短语，但避免强行插入，保持对话流畅。
 3. 对话应参考影视剧、小说或现实生活场景，使其在日常生活中能够使用。对话必须真实、有深度，而不是简单交换信息。例如，在面试场景中，面试官应像真正面试官一样，提出有挑战性的问题以评估候选人能力；在社交场景中，对话应体现自然互动和情感交流。
-4. 对话可以训练用户的核心诉求，句型属于用户提供的句型重点中的类型
+4. 对话可以训练用户的核心诉求，句型属于用户提供的句型重点中的类型。
+训练核心诉求以内容深度优先，如果核心诉求范围广，无法在一轮对话中完全满足，那么只挑选其中一部分核心诉求来生成对话。
+挑选部分核心诉求的逻辑如下（严格二选一）
+  当核心诉求已训练范围没有包含全部的核心诉求时，说明用户之前没有训练过核心诉求，那么直接从核心诉求中挑选一部分核心诉求来生成对话，并在返回json中（alreadyTrainedScope）标注本次生产的对话的涵盖的核心诉求范围，isFullTrained标注为false。
+  当核心诉求已训练范围包含了全部的核心诉求时，说明用户之前训练过核心诉求，那么按照提供的核心诉求已训练范围索引，从核心诉求已训练范围取出索引对应的核心诉求范围，作为本次训练的核心诉求范围，alreadyTrainedScope置空，isFullTrained标注为true。
 
 返回格式必须是一个 JSON 对象，结构如下：
 {
@@ -75,7 +94,9 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
   "rolename": [
     { "role": "A", "name": "A的姓名" },
     { "role": "B", "name": "B的姓名" }
-  ]
+  ],
+  "alreadyTrainedScope": "本次训练核心诉求范围",
+  "isFullTrained": "是否包含全部核心诉求",
 }
 JSON说明：
 1.vocabulary
@@ -93,6 +114,8 @@ rolename中存放对话中出现的角色名称。如果对话中没有角色名
 "侧重补充": "${supplementFocus}",
 "词汇范围": "${vocabularyRange}",
 "句型重点": "${sentenceStructureFocus}"
+"核心诉求已训练范围": [${alreadyTrainedScopes}],
+"核心诉求已训练范围索引": "${alreadyTrainedScopeIndex}"
 `;
 
 
