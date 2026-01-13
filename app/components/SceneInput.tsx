@@ -1,9 +1,11 @@
 'use client'
 import React, { useState } from 'react'
 import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore, useKeywordStore } from '@/app/store'
-import { generateDialogue } from '../lib/apiCalls';
+import { generateDialogue, analyzeKeyword as analyzeKeywordApi, storeKeywordAnalysisResult } from '@/app/lib/dialogueApi';
+import { updateKeywordScope } from '@/app/lib/keywordScopeApi';
 import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from '../lib/prompts/generatePrompt';
 import PromptDisplay from './PromptDisplay';
+import { LEARNING_MODES } from '@/config/app';
 
 export default function SceneInput() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -12,8 +14,8 @@ export default function SceneInput() {
   const [showKeywordPrompt, setShowKeywordPrompt] = useState(false)
   const [keywordAnalysisPrompt, setKeywordAnalysisPrompt] = useState('')
   const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename, currentScene, setCurrentScene } = useDialogueStore()
-  const { mode, aiServices, dialogueConfig, currentLevel, vocabularyAbility } = useUserConfigStore()
-  const { userId } = useUserInfoStore()
+  const { mode, aiServices, dialogueConfig } = useUserConfigStore()
+  const { userId, currentLevel, vocabularyAbility, } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
   const { setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing } = useKeywordStore()
 
@@ -28,31 +30,20 @@ export default function SceneInput() {
       setIsAnalyzing(true)
       setKeywordStoreAnalyzing(true)
       
-      if (mode === 'prompt') {
+      if (mode === LEARNING_MODES.PROMPT) {
         // 提示词模式：直接生成分析提示词
         const prompt = generateAnalysisKeywordPrompt(currentScene.trim())
         setKeywordAnalysisPrompt(prompt)
         setShowKeywordPrompt(true)
       } else {
         // 正常模式：调用API分析关键字
-        const response = await fetch('/api/analyze-keyword', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            keyword: currentScene.trim(),
-            mode: 'normal',
-            userId: userId || undefined,
-            aiService: aiServices.textAI
-          })
+        const result = await analyzeKeywordApi({
+          keyword: currentScene.trim(),
+          mode: LEARNING_MODES.NORMAL,
+          userId: userId || '',
+          aiService: aiServices.textAI
         })
 
-        if (!response.ok) {
-          throw new Error('分析关键字失败')
-        }
-
-        const result = await response.json()
         if (result.success) {
           // 存储到keywordStore
           const keywordData = {
@@ -84,23 +75,21 @@ export default function SceneInput() {
       // 生成新对话前清空现有对话
       setDialogue([])
       
-      if (mode === 'prompt') {
+      if (mode === LEARNING_MODES.PROMPT) {
         // 提示词模式：直接在客户端生成提示词
         const vocabularyJson = JSON.stringify(vocabulary)
         
         // 从keywordStore获取当前关键字分析结果和已训练范围信息
-        const keywordStoreState = useKeywordStore.getState();
-        const keyword = keywordStoreState.currentKeyword;
-        const keywordAnalysis = keyword.analysis;
-        const alreadyTrainedScope = keywordStoreState.alreadyTrainedScope;
-        const alreadyTrainedScopeIndex = keywordStoreState.alreadyTrainedScopeIndex;
+        const { currentKeyword, alreadyTrainedScope, alreadyTrainedScopeIndex } = useKeywordStore.getState();
+        console.log('currentKeyword:', currentKeyword)
+        const keywordAnalysis = currentKeyword.analysis;
         
         const prompt = generateDialoguePrompt(
           currentScene.trim(),
           dialogueConfig.newWordRatio.toString(),
           dialogueConfig.familiarWordLevel,
-          currentLevel,
-          vocabularyAbility,
+          currentLevel || '',
+          vocabularyAbility || '',
           vocabularyJson,
           // 新增参数
           '中文', // userLanguage
@@ -117,17 +106,18 @@ export default function SceneInput() {
         const alreadyTrainedScope = keywordStoreState.alreadyTrainedScope;
         const alreadyTrainedScopeIndex = keywordStoreState.alreadyTrainedScopeIndex;
         
-        const data = await generateDialogue(
-          currentScene.trim(), 
-          mode, 
-          aiServices.textAI,
+        const result = await generateDialogue({
+          scene: currentScene.trim(),
+          mode,
+          aiService: aiServices.textAI,
           dialogueConfig,
           userId,
           currentLevel,
           vocabularyAbility,
           alreadyTrainedScope,
           alreadyTrainedScopeIndex
-        )
+        });
+        const data = result;
 
         console.log('生成的结果:', data)
         
@@ -146,17 +136,11 @@ export default function SceneInput() {
           // 如果有用户ID和已训练范围信息，存储到数据库
           if (userId && alreadyTrainedScope !== undefined) {
             try {
-              await fetch('/api/keyword-scope', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  userId: parseInt(userId),
-                  keywordName: currentScene.trim(),
-                  alreadyTrainedScope,
-                  isFullTrained: isFullTrained || false
-                })
+              await updateKeywordScope({
+                userId: parseInt(userId),
+                keywordName: currentScene.trim(),
+                alreadyTrainedScope,
+                isFullTrained: isFullTrained || false
               })
               
               // 根据isFullTrained状态更新keyWordStore
@@ -214,22 +198,15 @@ export default function SceneInput() {
       setCurrentKeyword(keywordData)
       addKeywordToList(keywordData)
       
-      // 关闭提示词展示组件
-      setShowKeywordPrompt(false)
-      
       // 如果有用户ID，存储到数据库
       if (userId) {
-        await fetch('/api/analyze-keyword', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            ...keywordData,
-            userId: userId
-          })
+        storeKeywordAnalysisResult({
+          ...keywordData,
+          userId: userId
         })
       }
+      // 关闭提示词展示组件
+      setShowKeywordPrompt(false)
       
       // 继续生成对话
       generateDialogueAfterAnalysis()

@@ -7,6 +7,7 @@ import { useDialogueStore, useUserConfigStore } from '@/app/store'
 import { generateResultAnalyzPrompt } from '../lib/prompts/generatePrompt'
 import PromptDisplay from './PromptDisplay'
 import type { VocabularyItem as DialogueVocabularyItem } from '@/app/types/dialogue'
+import { analyzePracticeResult } from '@/app/lib/practiceApi'
 
 type DiffSegment = {
   type: string
@@ -84,23 +85,12 @@ export default function PracticeResult({
       setError('')
       
       try {
-        const response = await fetch('/api/practice-analysis', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            analysisData: JSON.stringify(analysisData),
-            scene: currentScene
-          })
+        const result = await analyzePracticeResult({
+          analysisData: JSON.stringify(analysisData),
+          scene: currentScene
         })
         
-        if (!response.ok) {
-          throw new Error('API调用失败')
-        }
-        
-        const data = await response.json()
-        console.log('Analysis result:', data)
+        console.log('Analysis result:', result)
         
         // 调用onExit并传递分析结果
         onExit()

@@ -82,6 +82,7 @@ export class UserDAL {
     dailyGoal?: number;
     vocabularyAbility?: string;
     totalStudyMinutes?: number;
+    finalScore?: string;
   }) {
     return await prisma.user.update({
       where: { id },

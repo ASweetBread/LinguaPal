@@ -27,7 +27,7 @@ export const VOCABULARY_PROMPT = (additionalText: string) => `请作为词汇能
 5. 运行规则：
    - 全程无需对话提示，仅通过JSON交互
    - 自动记录10-15轮测试（随机结束在10-15题间）
-   - 最终轮输出增加结束标记：{"result": true/false, "text_cn": "正确汉语释义", "final_score": "估算词汇量范围", "final_level": "A2", "analysis": "能力描述"}
+   - 最终轮输出增加结束标记：{"result": true/false, "text_cn": "正确汉语释义", "finalScore": "估算词汇量范围", "currentLevel": "A2", "vocabularyAbility": "能力描述"}
    - 最终评估应基于“用户稳定表现的最高难度级别”，而不是所有题目的平均正确率
 6. 额外规则：
    - ${additionalText}

@@ -1,15 +1,18 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useUserConfigStore } from '../store/userConfigStore';
+import { useUserInfoStore } from '../store/userInfoStore';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogOverlay } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { copyToClipboard } from '@/lib/index';
 import { useToast } from '@/hooks/use-toast';
+import PromptDisplay from './PromptDisplay';
 import { ArrowLeft } from 'lucide-react';
 import { LEARNING_MODES } from '@/config/app';
 import { generateVocabularyPrompt } from '../lib/prompts/generatePrompt';
+import { generateVocabularyTest, submitVocabularyTest, updateVocabularyTestResult } from '../lib/vocabularyTestApi';
 
 interface VocabularyTestProps {
   isOpen: boolean;
@@ -17,13 +20,20 @@ interface VocabularyTestProps {
 }
 
 // 词汇测试核心功能组件
-const VocabularyTestContent = () => {
+const VocabularyTestContent: React.FC<VocabularyTestProps> = ({ isOpen, onOpenChange }) => {
   const { mode } = useUserConfigStore();
+  const { userId } = useUserInfoStore();
   const [prompt, setPrompt] = useState<string>('');
   const [testResult, setTestResult] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [userInput, setUserInput] = useState<string>('');
   const { toast } = useToast();
+  
+  // 处理分析结果提交
+  const handleAnalysisResultSubmit = (result: string) => {
+    setUserInput(result);
+    handleSubmit(result)
+  };
 
   // 初始化测试
   const initializeTest = () => {
@@ -35,17 +45,10 @@ const VocabularyTestContent = () => {
       setLoading(false);
     } else {
       // 正常模式：调用API生成测试
-      fetch('/api/vocabulary-test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mode: LEARNING_MODES.NORMAL,
-          aiService: 'zhipu',
-        }),
+      generateVocabularyTest({
+        mode: LEARNING_MODES.NORMAL,
+        aiService: 'zhipu'
       })
-        .then((res) => res.json())
         .then((data) => {
           if (data.prompt) {
             setPrompt(data.prompt);
@@ -60,34 +63,64 @@ const VocabularyTestContent = () => {
         });
     }
   };
-
+  const handleSubmitNormal = () => {
+    handleSubmit(userInput);
+  }
   // 提交测试结果
-  const handleSubmit = () => {
+  const handleSubmit = (userInput: string) => {
     if (!userInput.trim()) return;
     
     setLoading(true);
-    fetch('/api/vocabulary-test', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    if (mode === LEARNING_MODES.PROMPT) {
+      let parsedResult = JSON.parse(userInput.trim());
+      if (!(parsedResult.finalScore && parsedResult.currentLevel && parsedResult.vocabularyAbility && userId)) {
+        toast({
+          title: "词汇量测试结果格式错误",
+          description: "请确保输入的JSON格式正确，包含finalScore、currentLevel、vocabularyAbility和userId字段",
+          duration: 2000,
+        });
+        return;
+      }
+      updateVocabularyTestResult({
+          userId: parseInt(userId),
+          finalScore: parsedResult.finalScore,
+          currentLevel: parsedResult.currentLevel,
+          vocabularyAbility: parsedResult.vocabularyAbility,
+        })
+          .then((updateData) => {
+            if (updateData.success) {
+              toast({
+                title: "词汇量测试结果已保存",
+                description: "您的词汇量水平已更新",
+                duration: 2000,
+              });
+            }
+            setLoading(false);
+            onOpenChange(false);
+          })
+          .catch((error) => {
+            console.error('更新用户词汇量信息失败:', error);
+            setLoading(false);
+          });
+    }
+    if (mode === LEARNING_MODES.NORMAL) {
+      // 正常模式：调用API提交测试结果
+      submitVocabularyTest({
         mode: LEARNING_MODES.NORMAL,
         aiService: 'zhipu',
         userInput: userInput.trim(),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.feedback) {
-          setTestResult(data.feedback);
-        }
-        setLoading(false);
       })
-      .catch((error) => {
-        console.error('提交测试结果失败:', error);
-        setLoading(false);
-      });
+        .then((data) => {
+          if (data.feedback) {
+            setTestResult(data.feedback);
+          }
+          setLoading(false);
+        })
+        .catch((error) => {
+          console.error('提交测试结果失败:', error);
+          setLoading(false);
+        });
+    }
   };
 
   // 初始化测试
@@ -96,7 +129,9 @@ const VocabularyTestContent = () => {
   }, [mode]);
 
   return (
-    <Card className="h-full border-0 rounded-none shadow-none">
+    <>
+    {mode === LEARNING_MODES.NORMAL && 
+      <Card className="h-full border-0 rounded-none shadow-none">
       <CardHeader>
         <h2 className="text-xl font-bold text-primary">词汇测试</h2>
       </CardHeader>
@@ -164,7 +199,7 @@ const VocabularyTestContent = () => {
 
             {/* 提交按钮 */}
             <Button
-              onClick={handleSubmit}
+              onClick={handleSubmitNormal}
               disabled={loading || !userInput.trim()}
               className="w-full"
             >
@@ -173,7 +208,17 @@ const VocabularyTestContent = () => {
           </>
         )}
       </CardContent>
-    </Card>
+    </Card>}
+    {/* PromptDisplay组件 - 仅在提示词模式下显示 */}
+    {mode === LEARNING_MODES.PROMPT && (
+      <PromptDisplay
+          prompt={prompt}
+          onSubmit={handleAnalysisResultSubmit}
+          onClose={() => onOpenChange(false)}
+        />
+    )}
+
+    </>
   );
 };
 
@@ -182,6 +227,7 @@ const VocabularyTest: React.FC<VocabularyTestProps> = ({ isOpen, onOpenChange })
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogOverlay />
+      <DialogTitle></DialogTitle>
       <DialogContent 
         className="w-screen h-screen max-w-none sm:max-w-none p-0 overflow-hidden rounded-none fixed top-0 left-0 translate-x-0 translate-y-0"
         showCloseButton={false}
@@ -195,7 +241,7 @@ const VocabularyTest: React.FC<VocabularyTestProps> = ({ isOpen, onOpenChange })
         </button>
         
         <Card className="h-full border-0 rounded-none shadow-none pt-12">
-          <VocabularyTestContent />
+          <VocabularyTestContent isOpen={isOpen} onOpenChange={onOpenChange} />
         </Card>
       </DialogContent>
     </Dialog>

@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { copyToClipboard } from '@/lib/index'
+import { useToast } from '@/hooks/use-toast'
 
 interface PromptDisplayProps {
   prompt: string
@@ -13,6 +15,7 @@ interface PromptDisplayProps {
 
 export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDisplayProps) {
   const [analysisResult, setAnalysisResult] = useState('')
+  const { toast } = useToast()
 
   const handleSubmit = () => {
     if (analysisResult.trim()) {
@@ -21,12 +24,20 @@ export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDispl
   }
 
   const handleCopyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(prompt)
-      alert('提示词已复制到剪贴板')
-    } catch (error) {
-      console.error('复制失败:', error)
-      alert('复制失败，请手动复制')
+    const success = await copyToClipboard(prompt)
+    if (success) {
+      toast({
+        title: '复制成功',
+        description: '提示词已复制到剪贴板',
+        duration: 2000,
+      })
+    } else {
+      toast({
+        title: '复制失败',
+        description: '请手动复制提示词',
+        variant: 'destructive',
+        duration: 2000,
+      })
     }
   }
 

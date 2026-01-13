@@ -79,6 +79,7 @@ export class UserService {
     dailyGoal?: number;
     vocabularyAbility?: string;
     totalStudyMinutes?: number;
+    finalScore?: string;
   }) {
     try {
       // 检查用户是否存在

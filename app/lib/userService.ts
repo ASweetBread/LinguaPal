@@ -71,9 +71,14 @@ export class UserService {
    * @param userData API返回的用户信息
    * @returns 用户信息对象
    */
-  static mapUserInfo(userData: any): { userId: string } {
+  static mapUserInfo(userData: any) {
     return {
-      userId: userData.id?.toString() || ''
+      userId: userData.id?.toString() || '',
+      username: userData.username,
+      currentLevel: userData.currentLevel,
+      lastLoginAt: userData.lastLoginAt ? new Date(userData.lastLoginAt) : undefined,
+      totalStudyMinutes: userData.totalStudyMinutes,
+      vocabularyAbility: userData.vocabularyAbility
     };
   }
 }

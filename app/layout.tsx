@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   const { theme, isLoading, error, setIsLoading, setError, resetError } = useAppConfigStore();
-  const { setUserInfo } = useUserConfigStore();
-  const { userId, setUserId } = useUserInfoStore();
+  const { setUserConfig } = useUserConfigStore();
+  const { userId, setUserId, setUserInfo } = useUserInfoStore();
   
   // 根据主题状态更新html的dark类
   useEffect(() => {
@@ -37,23 +37,18 @@ export default function RootLayout({
     try {
       resetError();
       setIsLoading(true);
-      
-      // 从localStorage获取userId
-      const storedConfig = localStorage.getItem('lingua-pal-user-info-storage');
-      let storedUserId = userId;
-      if (storedConfig) {
-        const parsedConfig = JSON.parse(storedConfig);
-        storedUserId = parsedConfig.state.userId || '';
-      }
-      
+
+      let storedUserId = '1';
       if (storedUserId) {
         // 获取用户信息
         const userData = await UserService.getUserInfo(parseInt(storedUserId));
         // 更新用户配置
-        setUserInfo(UserService.mapUserToConfig(userData));
+        // setUserConfig(UserService.mapUserToConfig(userData));
         // 更新用户信息
         const userInfo = UserService.mapUserInfo(userData);
-        setUserId(userInfo.userId);
+        console.log('userInfo:', userInfo);
+        // 存储所有用户信息到UserInfoStore
+        setUserInfo(userInfo);
       }
       
       setIsLoading(false);

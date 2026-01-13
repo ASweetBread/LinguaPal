@@ -11,14 +11,10 @@ export interface UserConfigState {
     newWordRatio: number;
     familiarWordLevel: number;
   };
-  currentLevel: string;
-  vocabularyAbility: string;
   updateMode: (mode: LearningMode) => void;
   updateAIServices: (services: Partial<AIService>) => void;
   updateDialogueConfig: (config: Partial<{ newWordRatio: number; familiarWordLevel: number }>) => void;
-  updateCurrentLevel: (level: string) => void;
-  updateVocabularyAbility: (ability: string) => void;
-  setUserInfo: (info: Partial<UserConfigState>) => void;
+  setUserConfig: (info: Partial<UserConfigState>) => void;
 }
 
 
@@ -37,8 +33,6 @@ export const useUserConfigStore = create<UserConfigState>()(
         newWordRatio: 30, // 默认生词比例30%
         familiarWordLevel: 3 // 默认熟词度3
       },
-      currentLevel: "A1", // 默认词汇水平A1
-      vocabularyAbility: "初级学习者", // 默认能力描述
       updateMode: (mode) =>
         set(() => ({
           mode,
@@ -57,16 +51,8 @@ export const useUserConfigStore = create<UserConfigState>()(
             ...config
           }
         })),
-      updateCurrentLevel: (level) =>
-        set(() => ({
-          currentLevel: level,
-        })),
-      updateVocabularyAbility: (ability) =>
-        set(() => ({
-          vocabularyAbility: ability,
-        })),
       // 设置用户信息
-      setUserInfo: (info) =>
+      setUserConfig: (info) =>
         set((state) => ({
           ...state,
           ...info

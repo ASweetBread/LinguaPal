@@ -14,8 +14,15 @@ DELETE FROM configs;
 DELETE FROM users;
 
 -- 插入测试用户数据
-INSERT INTO users (username, password, current_level, daily_goal, total_study_minutes, vocabulary_ability)
-VALUES ('testuser', 'testpassword', 'A2', 10, 300, '中级学习者')
+INSERT INTO users (
+    username, 
+    password, 
+    "currentLevel", 
+    "dailyGoal", 
+    "totalStudyMinutes", 
+    "vocabularyAbility"
+)
+VALUES ('testuser', 'testpassword', '', 0, 0, '')
 ON CONFLICT (username) DO NOTHING;
 
 -- 插入测试配置数据，使用刚插入的用户ID

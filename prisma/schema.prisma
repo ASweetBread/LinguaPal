@@ -10,10 +10,10 @@ datasource db {
 
 model User {
   id                  Int       @id @default(autoincrement())
-  username            String    @unique
   password            String
-  currentLevel        String?   @default("A1")
-  dailyGoal           Int       @default(5)
+  username            String    @unique
+  currentLevel        String?   @default("")
+  finalScore          String?
   createdAt           DateTime  @default(now())
   lastLoginAt         DateTime?
   totalStudyMinutes   Int       @default(0)
@@ -37,6 +37,7 @@ model Config {
   
   // 学习模式
   mode                    String @default("normal")
+  dailyGoal               Int    @default(5)
   
   // AI服务配置
   aiTextService           String @default("")

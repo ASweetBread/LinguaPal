@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose, DialogOverlay } from '@/components/ui/dialog';
 import RecordingTester from './RecordingTester';
-import { useAppConfigStore } from '@/app/store';
+import { useAppConfigStore, useUserInfoStore } from '@/app/store';
 
 /**
  * 导航栏组件，包含录音测试弹窗功能
@@ -11,6 +11,7 @@ import { useAppConfigStore } from '@/app/store';
 export default function NavBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { theme, toggleTheme } = useAppConfigStore();
+  const { username } = useUserInfoStore();
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
@@ -82,6 +83,12 @@ export default function NavBar() {
                 个人配置
               </Link>
               
+              {/* 用户名显示 */}
+              {username && (
+                <span className="ml-auto text-gray-700 dark:text-gray-200 font-medium">
+                  {username}
+                </span>
+              )}
             </nav>
           </div>
         </div>
