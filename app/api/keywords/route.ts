@@ -31,3 +31,34 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// 删除关键字
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: '缺少关键字ID' },
+        { status: 400 }
+      );
+    }
+
+    await KeywordsService.deleteKeyword(parseInt(id));
+
+    return NextResponse.json({
+      success: true,
+      message: '关键字删除成功'
+    });
+  } catch (error) {
+    console.error('API删除关键字失败:', error);
+    const errorMessage = error instanceof Error ? error.message : '删除关键字失败';
+    const statusCode = errorMessage === '关键字不存在' ? 404 : 500;
+    
+    return NextResponse.json(
+      { success: false, error: errorMessage },
+      { status: statusCode }
+    );
+  }
+}

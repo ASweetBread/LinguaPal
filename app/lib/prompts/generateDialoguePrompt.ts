@@ -80,12 +80,13 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
 挑选部分核心诉求的逻辑如下（严格二选一）
   当核心诉求已训练范围没有包含全部的核心诉求时，说明用户之前没有训练过核心诉求，那么直接从核心诉求中挑选一部分核心诉求来生成对话，并在alreadyTrainedScope标注本次生产的对话的涵盖的核心诉求范围（字符串结构），isFullTrained标注为false。
   当核心诉求已训练范围包含了全部的核心诉求时，说明用户之前训练过核心诉求，那么按照提供的核心诉求已训练范围索引，从核心诉求已训练范围取出索引对应的核心诉求范围，作为本次训练的核心诉求范围，alreadyTrainedScope置空，isFullTrained标注为true。
-5. 生成的对话的结尾不能再提出一个新的问题，确保对话的完整性
+5. 如果某一方的一次发言过长，字数超过了230个字符，那么需要将这一次发言拆分成多句，放在scentence数组中。
+6. 生成的对话的结尾不能再提出一个新的问题，对话没有讨论完成但是可以结束
 
 返回格式必须是一个 JSON 对象，结构如下：
 {
   "dialogue": [
-    { "role": "A或B", "text": "英文对话文本", "text_cn": "${userLanguage}翻译（人名不必翻译）" },
+    { "role": "A或B", "scentence": [{ "text": "英文对话文本", "text_cn": "${userLanguage}翻译（人名不必翻译）" }] },
     ... // 4-8个对象，代表对话回合
   ],
   "vocabulary": [

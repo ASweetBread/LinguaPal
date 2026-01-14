@@ -1,12 +1,16 @@
 'use client'
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
+import { Trash2 } from 'lucide-react'
 import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore, useKeywordStore } from '@/app/store'
 import { generateDialogue, analyzeKeyword as analyzeKeywordApi, storeKeywordAnalysisResult } from '@/app/lib/dialogueApi';
 import { updateKeywordScope } from '@/app/lib/keywordScopeApi';
+import { deleteKeyword } from '@/app/lib/keywordsApi';
 import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from '../lib/prompts/generatePrompt';
 import PromptDisplay from './PromptDisplay';
 import { LEARNING_MODES } from '@/config/app';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 export default function SceneInput() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -18,7 +22,7 @@ export default function SceneInput() {
   const { mode, aiServices, dialogueConfig } = useUserConfigStore()
   const { userId, currentLevel, vocabularyAbility, } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
-  const { currentKeyword, keywordList, setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing, updateKeywordTrainedScope } = useKeywordStore()
+  const { currentKeyword, keywordList, setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing, updateKeywordTrainedScope, deleteKeyword: deleteKeywordFromStore } = useKeywordStore()
 
   // 分析关键字
   const analyzeKeyword = async () => {
@@ -126,8 +130,22 @@ export default function SceneInput() {
         
         // 正常模式：设置对话和词汇表
         if (data.dialogue) {
+          // 转换新的JSON格式为旧的格式
+          const transformedDialogue = data.dialogue.flatMap((item: any) => {
+            // 从scentence数组中获取每个元素，展开成独立的对话对象
+            if (item.scentence && item.scentence.length > 0) {
+              return item.scentence.map((sentence: any) => ({
+                role: item.role,
+                text: sentence.text || '',
+                text_cn: sentence.text_cn || ''
+              }))
+            }
+            // 如果没有scentence数组，返回一个空数组
+            return []
+          })
+          
           setDialogueAndVocabulary({
-            dialogue: data.dialogue,
+            dialogue: transformedDialogue,
             vocabulary: data.vocabulary || []
           })
           setRolename(data.rolename)
@@ -233,6 +251,22 @@ export default function SceneInput() {
     }
   }
 
+  // 处理删除关键字
+  const handleDeleteKeyword = async (keywordId: string) => {
+    try {
+      // 调用API删除关键字
+      if (userId) {
+        await deleteKeyword(keywordId)
+      }
+      
+      // 从keywordStore中删除
+      useKeywordStore.getState().deleteKeyword(keywordId)
+    } catch (error) {
+      console.error('删除关键字时出错:', error)
+      alert('删除关键字失败，请稍后重试')
+    }
+  }
+
   // 处理生成对话
   const handleGenerateDialogue = async () => {
     // 先分析关键字
@@ -244,8 +278,23 @@ export default function SceneInput() {
     try {
       // 尝试解析用户输入的对话
       const parsedDialogue = JSON.parse(result.trim())
+      
+      // 转换新的JSON格式为旧的格式
+      const transformedDialogue = parsedDialogue.dialogue.flatMap((item: any) => {
+        // 从scentence数组中获取每个元素，展开成独立的对话对象
+        if (item.scentence && item.scentence.length > 0) {
+          return item.scentence.map((sentence: any) => ({
+            role: item.role,
+            text: sentence.text || '',
+            text_cn: sentence.text_cn || ''
+          }))
+        }
+        // 如果没有scentence数组，返回一个空数组
+        return []
+      })
+      
       setDialogueAndVocabulary({
-        dialogue: parsedDialogue.dialogue,
+        dialogue: transformedDialogue,
         vocabulary: parsedDialogue.vocabulary || []
       })
       setRolename(parsedDialogue.rolename)
@@ -290,14 +339,52 @@ export default function SceneInput() {
             {keywordList.map((keyword) => (
               <Card
                 key={keyword.id || keyword.keyword}
-                onClick={() => handleKeywordSelect(keyword)}
-                className="cursor-pointer transition-all hover:shadow-md"
+                className="transition-all hover:shadow-md"
               >
-                <CardContent className="p-3">
-                  <div className="font-medium text-sm">{keyword.keyword}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    难度: {keyword.analysis.difficultyLevel || '未设置'}
+                <CardContent className="p-3 relative">
+                  <div 
+                    onClick={() => handleKeywordSelect(keyword)}
+                    className="cursor-pointer"
+                  >
+                    <div className="font-medium text-sm">{keyword.keyword}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      难度: {keyword.analysis.difficultyLevel || '未设置'}
+                    </div>
                   </div>
+                  {keyword.id && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          onClick={(e) => {
+                            e.stopPropagation() // 阻止事件冒泡
+                          }}
+                          aria-label="删除关键字"
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent className="sm:max-w-md">
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>确认删除</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            确定要删除这个关键字吗？此操作不可撤销。
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>取消</AlertDialogCancel>
+                          <AlertDialogAction 
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                            onClick={() => handleDeleteKeyword(keyword.id!)}
+                          >
+                            确认删除
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </CardContent>
               </Card>
             ))}

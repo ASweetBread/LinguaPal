@@ -59,4 +59,30 @@ export class KeywordsService {
       throw new Error('获取用户关键字列表失败');
     }
   }
+
+  /**
+   * 删除关键字
+   * @param id 关键字ID
+   * @returns 删除结果
+   */
+  static async deleteKeyword(id: number): Promise<void> {
+    try {
+      // 检查关键字是否存在
+      const existingKeyword = await prisma.keyword.findUnique({
+        where: { id },
+      });
+      
+      if (!existingKeyword) {
+        throw new Error('关键字不存在');
+      }
+
+      // 删除关键字（关联的KeywordScope会通过级联删除自动删除）
+      await prisma.keyword.delete({
+        where: { id },
+      });
+    } catch (error) {
+      console.error('删除关键字失败:', error);
+      throw error;
+    }
+  }
 }
