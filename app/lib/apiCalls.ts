@@ -111,3 +111,11 @@ export async function updateConfig(
     name: 'update-config-client',
   });
 }
+
+// 获取用户关键字列表
+export async function getKeywordsByUserId(userId: number) {
+  return clientFetch(`/api/keywords?userId=${userId}`, {
+    method: 'GET',
+    name: 'get-keywords-by-user-id-client',
+  });
+}

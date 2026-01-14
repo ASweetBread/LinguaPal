@@ -6,6 +6,7 @@ import { updateKeywordScope } from '@/app/lib/keywordScopeApi';
 import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from '../lib/prompts/generatePrompt';
 import PromptDisplay from './PromptDisplay';
 import { LEARNING_MODES } from '@/config/app';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function SceneInput() {
   const [showPrompt, setShowPrompt] = useState(false)
@@ -17,7 +18,7 @@ export default function SceneInput() {
   const { mode, aiServices, dialogueConfig } = useUserConfigStore()
   const { userId, currentLevel, vocabularyAbility, } = useUserInfoStore()
   const { vocabulary } = useVocabularyStore()
-  const { setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing } = useKeywordStore()
+  const { currentKeyword, keywordList, setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing, updateKeywordTrainedScope } = useKeywordStore()
 
   // 分析关键字
   const analyzeKeyword = async () => {
@@ -48,7 +49,9 @@ export default function SceneInput() {
           // 存储到keywordStore
           const keywordData = {
             keyword: result.data.keyword,
-            analysis: result.data.analysis
+            analysis: result.data.analysis,
+            alreadyTrainedScope: [], // 初始化本次训练核心诉求范围为空数组
+            alreadyTrainedScopeIndex: undefined, // 初始化已训练范围索引为0
           }
           setCurrentKeyword(keywordData)
           addKeywordToList(keywordData)
@@ -80,9 +83,10 @@ export default function SceneInput() {
         const vocabularyJson = JSON.stringify(vocabulary)
         
         // 从keywordStore获取当前关键字分析结果和已训练范围信息
-        const { currentKeyword, alreadyTrainedScope, alreadyTrainedScopeIndex } = useKeywordStore.getState();
+        const { currentKeyword } = useKeywordStore.getState();
         console.log('currentKeyword:', currentKeyword)
         const keywordAnalysis = currentKeyword.analysis;
+        const { alreadyTrainedScope, alreadyTrainedScopeIndex } = currentKeyword;
         
         const prompt = generateDialoguePrompt(
           currentScene.trim(),
@@ -101,10 +105,9 @@ export default function SceneInput() {
         setShowPrompt(true)
       } else {
         // 正常模式：调用后端API生成对话
-        // 从keywordStore获取已训练范围信息
-        const keywordStoreState = useKeywordStore.getState();
-        const alreadyTrainedScope = keywordStoreState.alreadyTrainedScope;
-        const alreadyTrainedScopeIndex = keywordStoreState.alreadyTrainedScopeIndex;
+        // 从keywordStore获取当前关键字和已训练范围信息
+        const { currentKeyword } = useKeywordStore.getState();
+        const { alreadyTrainedScope, alreadyTrainedScopeIndex } = currentKeyword;
         
         const result = await generateDialogue({
           scene: currentScene.trim(),
@@ -144,23 +147,25 @@ export default function SceneInput() {
               })
               
               // 根据isFullTrained状态更新keyWordStore
-              if (isFullTrained) {
-                useKeywordStore.getState().setAlreadyTrainedScopeIndex(0);
-              } else {
-                // 如果不是全训练状态，保留当前索引或递增
-                const currentIndex = useKeywordStore.getState().alreadyTrainedScopeIndex;
-                useKeywordStore.getState().setAlreadyTrainedScopeIndex(
-                  currentIndex !== undefined && currentIndex !== null ? currentIndex + 1 : 0
-                );
+              if (currentKeyword.id) {
+                if (isFullTrained) {
+                  updateKeywordTrainedScope(currentKeyword.id, alreadyTrainedScope, 0);
+                } else {
+                  // 如果不是全训练状态，保留当前索引或递增
+                  const currentIndex = currentKeyword.alreadyTrainedScopeIndex;
+                  updateKeywordTrainedScope(
+                    currentKeyword.id, 
+                    alreadyTrainedScope, 
+                    currentIndex !== undefined && currentIndex !== null ? currentIndex + 1 : 0
+                  );
+                }
               }
               
               // 更新已训练范围数组
-              if (alreadyTrainedScope) {
-                const currentScope = useKeywordStore.getState().alreadyTrainedScope;
-                useKeywordStore.getState().setAlreadyTrainedScope([
-                  ...currentScope,
-                  alreadyTrainedScope
-                ]);
+              if (alreadyTrainedScope && currentKeyword.id) {
+                // 确保alreadyTrainedScope是一个数组
+                const scopeArray = Array.isArray(alreadyTrainedScope) ? alreadyTrainedScope : [alreadyTrainedScope];
+                updateKeywordTrainedScope(currentKeyword.id, scopeArray, currentKeyword.alreadyTrainedScopeIndex);
               }
             } catch (error) {
               console.error('存储关键字范围时出错:', error);
@@ -175,6 +180,16 @@ export default function SceneInput() {
       setIsLoading(false)
     }
   }
+
+  // 处理点击关键字的事件
+  const handleKeywordSelect = (keyword: any) => {
+    // 将选中的关键字设置为currentKeyword
+    setCurrentKeyword(keyword);
+    // 设置currentScene为选中的关键字
+    setCurrentScene(keyword.keyword);
+    // 调用生成对话的逻辑
+    generateDialogueAfterAnalysis();
+  };
 
   // 处理关键字分析结果提交
   const handleKeywordAnalysisSubmit = async (result: string) => {
@@ -191,7 +206,9 @@ export default function SceneInput() {
           supplements: analysis.supplements || analysis.supplementFocus || '',
           vocabularyScope: analysis.vocabularyScope || analysis.vocabularyRange || '',
           keySentencePatterns: analysis.keySentencePatterns || analysis.sentenceStructureFocus || ''
-        }
+        },
+        alreadyTrainedScope: [], // 初始化本次训练核心诉求范围为空数组
+        alreadyTrainedScopeIndex: undefined, // 初始化已训练范围索引为0
       }
       
       // 存储到keywordStore
@@ -264,6 +281,29 @@ export default function SceneInput() {
           {isAnalyzing ? '分析中...' : isLoading ? '生成中...' : '生成对话'}
         </button>
       </div>
+
+      {/* 历史关键字列表 */}
+      {keywordList.length > 0 && (
+        <div className="mt-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">历史关键字</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {keywordList.map((keyword) => (
+              <Card
+                key={keyword.id || keyword.keyword}
+                onClick={() => handleKeywordSelect(keyword)}
+                className="cursor-pointer transition-all hover:shadow-md"
+              >
+                <CardContent className="p-3">
+                  <div className="font-medium text-sm">{keyword.keyword}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    难度: {keyword.analysis.difficultyLevel || '未设置'}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 提示词展示组件 */}
       {showPrompt && (
