@@ -10,8 +10,7 @@ import PracticeResult from './PracticeResult'
 import TypingInput from './TypingInput'
 
 type Task = {
-  promptIndex: number
-  targetIndex: number
+  index: number
 }
 
 type diffType = Array<{ type: string; word?: string; correct?: boolean; userInput?: string; value?: string }>
@@ -24,17 +23,24 @@ type ReviewItem = {
   userInput: string
 }
 
+type UserInputState = {
+  value: string
+  correct: boolean | null
+  diff: diffType
+}
+
 export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const { dialogue, vocabulary, rolename, updateVocabularyErrorCount, setShowPractice } = useDialogueStore()
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [current, setCurrent] = useState(0)
-  const [userInput, setUserInput] = useState('')
+  const [userInputs, setUserInputs] = useState<UserInputState[]>([])
   const [showResult, setShowResult] = useState(false)
   const [lastResultCorrect, setLastResultCorrect] = useState<boolean | null>(null)
   const [lastDiff, setLastDiff] = useState<diffType>([])
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
+  const [isReviewMode, setIsReviewMode] = useState(false)
   const currentHandler: React.MutableRefObject<((e: KeyboardEvent) => void) | null> = React.useRef(null)
 
   const handleGlobalKeyDown = (e: KeyboardEvent) => {
@@ -60,29 +66,12 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     }
   }, [])
 
-  const buildTasksForRole = (role: 'A' | 'B') => {
-    const res: Task[] = []
-    for (let i = 0; i < dialogue.length; i++) {
-      if (dialogue[i].role === role) {
-        let target = -1
-        for (let j = i + 1; j < dialogue.length; j++) {
-          if (dialogue[j].role !== role) {
-            target = j
-            break
-          }
-        }
-        if (target !== -1) res.push({ promptIndex: i, targetIndex: target })
-      }
-    }
-    return res
-  }
-
+  // 构建任务：每个对话句子都是一个任务
   const buildAllTasks = () => {
-    const tasksA = buildTasksForRole('A')
-    const tasksB = buildTasksForRole('B')
-    return [...tasksA, ...tasksB]
+    return dialogue.map((_, index) => ({ index }))
   }
 
+  // 初始化任务和用户输入状态
   useEffect(() => {
     if (!dialogue || dialogue.length === 0) return
     const allTasks = buildAllTasks()
@@ -90,46 +79,52 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setCurrent(0)
     setShowResult(false)
     setShowPracticeResult(false)
-    setUserInput('')
+    // 初始化用户输入状态数组
+    setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
     setLastResultCorrect(null)
     setReviewQueue([])
+    setIsReviewMode(false)
   }, [dialogue])
 
   const currentTask = tasks[current]
   // 从rolename中提取角色名称数组
   const rolenames = rolename.map(item => item.name).filter(name => name !== '')
 
+  // 模拟语音播放功能
+  const handlePlayAudio = (text: string) => {
+    console.log('播放语音:', text)
+  }
+
   const onSubmit = () => {
     if (!currentTask) return
-    const ref = dialogue[currentTask.targetIndex].text
-    const input = userInput.replace(/,/g, ' ')
+    const ref = dialogue[currentTask.index].text
+    const input = userInputs[currentTask.index]?.value?.replace(/,/g, ' ') || ''
 
     const correct = isInputCorrect(ref, input)
     const similarity = calculateSimilarity(ref, input)
-    const diff = markDifferencesByWord(ref, userInput, rolenames)
+    const diff = markDifferencesByWord(ref, input, rolenames)
     setLastDiff(diff)
     setLastResultCorrect(correct)
     setShowResult(true)
 
-    const reviewItem: ReviewItem = {
-      promptIndex: currentTask.promptIndex,
-      targetIndex: currentTask.targetIndex,
-      diff,
-      passed: correct,
-      userInput: input
-    }
+    // 更新用户输入状态
+    setUserInputs(prev => {
+      const newInputs = [...prev]
+      newInputs[currentTask.index] = { ...newInputs[currentTask.index], correct, diff }
+      return newInputs
+    })
 
-    setReviewQueue(prev => [...prev, reviewItem])
-
-    if (!correct) {
-      setTasks(prev => {
-        const isAlreadyInQueue = prev.some((t, idx) => idx > current && t.targetIndex === currentTask.targetIndex)
-        if (isAlreadyInQueue) return prev
-        
-        const newTasks = [...prev]
-        newTasks.push(currentTask)
-        return newTasks
-      })
+    // 如果当前输入错误，且是第一次提交失败，添加到复习队列
+    const existingInputState = userInputs[currentTask.index]
+    if (!correct && (!existingInputState || existingInputState.correct !== false)) {
+      const reviewItem: ReviewItem = {
+        promptIndex: currentTask.index - 1, // 使用前一句作为提示
+        targetIndex: currentTask.index,
+        diff,
+        passed: false,
+        userInput: input
+      }
+      setReviewQueue(prev => [...prev, reviewItem])
 
       const incorrectWords = diff
         .filter(item => item.type === 'word' && !item.correct && item.word)
@@ -149,7 +144,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
 
   const onNext = () => {
     setShowResult(false)
-    setUserInput('')
     setLastResultCorrect(null)
     setLastDiff([])
 
@@ -159,7 +153,37 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
       return
     }
 
-    setShowPracticeResult(true)
+    // 检查是否有错误的句子需要复习
+    const incorrectTasks = userInputs
+      .map((input, index) => ({ index, ...input }))
+      .filter(item => item.correct === false)
+      .map(item => ({ index: item.index }))
+
+    if (incorrectTasks.length > 0) {
+      // 进入复习模式，重新练习错误的句子
+      setTasks(incorrectTasks)
+      setCurrent(0)
+      setIsReviewMode(true)
+    } else {
+      // 所有句子都正确，显示练习结果
+      setShowPracticeResult(true)
+    }
+  }
+
+  // 更新用户输入
+  const handleInputChange = (value: string) => {
+    if (!currentTask) return
+    setUserInputs(prev => {
+      const newInputs = [...prev]
+      newInputs[currentTask.index] = { ...newInputs[currentTask.index], value }
+      return newInputs
+    })
+  }
+
+  // 获取当前输入值
+  const getCurrentInputValue = () => {
+    if (!currentTask) return ''
+    return userInputs[currentTask.index]?.value || ''
   }
 
   const handleRestart = () => {
@@ -169,12 +193,34 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setTasks(allTasks)
     setCurrent(0)
     setShowResult(false)
-    setUserInput('')
+    setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
     setLastResultCorrect(null)
+    setIsReviewMode(false)
   }
 
   const handleExit = () => {
     setShowPractice(false)
+  }
+
+  // 获取角色头像样式
+  // const getRoleAvatarStyle = (role: string) => {
+  //   const roleStyles = {
+  //     A: {
+  //       bg: 'bg-pink-500 dark:bg-pink-600',
+  //       initial: '👧'
+  //     },
+  //     B: {
+  //       bg: 'bg-blue-500 dark:bg-blue-600',
+  //       initial: '👵'
+  //     }
+  //   }
+  //   return roleStyles[role]
+  // }
+
+  // 获取当前任务的中文翻译
+  const getCurrentTaskChinese = () => {
+    if (!currentTask) return ''
+    return dialogue[currentTask.index]?.text_cn || ''
   }
 
   if (showPracticeResult) {
@@ -199,123 +245,171 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     )
   }
 
-  const promptText = dialogue[currentTask.promptIndex].text
-  const targetText = dialogue[currentTask.targetIndex].text
-  const targetChinese = dialogue[currentTask.targetIndex].text_cn
   const isLastTask = current === tasks.length - 1
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">练习：请填写另一方的回复</h3>
+    <div className="w-full max-w-2xl mx-auto p-4">
+      <div className="mb-6 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">{isReviewMode ? '复习练习' : '对话练习'}</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500 dark:text-gray-400">进度：{current + 1}/{tasks.length}</span>
           <button
-            onClick={() => {
-              setShowPractice(false)
-            }}
-            className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-300"
+            onClick={handleExit}
+            className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
           >退出</button>
         </div>
       </div>
 
-      <div className="p-4 mb-4 bg-white dark:bg-gray-800 rounded shadow-sm">
-        <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">提示：</div>
-        <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-100 dark:text-gray-800 rounded border">{promptText}</div>
-
-        <label className="block text-sm font-medium mb-2">请填写另一方的原句（英文）</label>
-        <TypingInput
-          targetText={targetText}
-          value={userInput}
-          onChange={setUserInput}
-          disabled={showResult}
-          className="mb-3"
-        />
-
-        <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">参考中文：</div>
-        <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded border mb-3">{targetChinese}</div>
-
-        {!showResult && (
-          <div className="flex gap-2">
-            <button
-              onClick={onSubmit}
-              className="px-3 py-1 bg-blue-600 text-white rounded"
-            >提交</button>
-            <button
-              onClick={() => {
-                setShowResult(true)
-                setLastResultCorrect(null)
-                setLastDiff(markDifferencesByWord(targetText, userInput, rolenames))
-              }}
-              className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
-            >显示答案</button>
-          </div>
-        )}
-
-        {showResult && (
-          <div className="mt-4">
-            <div className={`p-3 rounded ${lastResultCorrect ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-              <div className="text-sm font-medium mb-2">原句（已标注差异）：</div>
-              <div className="text-gray-800 dark:text-gray-200">
-                {lastDiff.map((seg, idx) => {
-                  if (seg.type === 'word' && seg.word) {
-                    return (
-                      <span
-                        key={idx}
-                        className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400'}
-                      >
-                        {seg.word}
-                        {idx < lastDiff.length - 1 && lastDiff[idx + 1].type === 'word' ? ' ' : ''}
-                      </span>
-                    )
-                  } else if (seg.type === 'punctuation' && seg.value) {
-                    return (
-                      <span key={idx} className="px-0">
-                        {seg.value}
-                      </span>
-                    )
-                  }
-                  return null
-                })}
+      {/* 分步显示输入框区域 */}
+      <div className="space-y-6 mb-6">
+        {/* 显示当前任务之前的所有已完成对话 */}
+        {tasks.slice(0, current).map((task, idx) => {
+          const msg = dialogue[task.index]
+          const inputState = userInputs[task.index]
+          // const roleStyle = getRoleAvatarStyle(msg.role)
+          return (
+            <div key={idx} className="flex items-start gap-3">
+              {/* <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
+                {roleStyle.initial}
+              </div> */}
+              <div className="flex-1 space-y-1">
+                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 relative">
+                  <button
+                    onClick={() => handlePlayAudio(msg.text)}
+                    className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </button>
+                  <p className="text-gray-800 dark:text-gray-200">{msg.text}</p>
+                  {msg.text_cn && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{msg.text_cn}</p>
+                  )}
+                </div>
               </div>
             </div>
+          )
+        })}
 
-            {/* {!lastResultCorrect && (
-              <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                <span className="font-medium">你的输入：</span>
-                { lastDiff.map(seg => seg.userInput || seg.value).join(' ') || <em className="text-gray-400">（空）</em>}
+        {/* 当前任务的输入框 */}
+        {tasks.slice(current, current + 1).map((task, idx) => {
+          const msg = dialogue[task.index]
+          const inputState = userInputs[task.index]
+          // const roleStyle = getRoleAvatarStyle(msg.role)
+          return (
+            <div key={idx} className="flex items-start gap-3">
+              {/* <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
+                {roleStyle.initial}
+              </div> */}
+              <div className="flex-1 space-y-1">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 relative">
+                  <button
+                    onClick={() => handlePlayAudio(msg.text)}
+                    className="absolute top-2 right-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                  </button>
+                  
+                  {/* 显示输入框和结果 */}
+                  <div className="space-y-2">
+                    {/* 输入框：即使显示结果也允许修改 */}
+                    <TypingInput
+                      targetText={msg.text}
+                      value={getCurrentInputValue()}
+                      onChange={handleInputChange}
+                      disabled={false} /* 始终允许编辑 */
+                    />
+                    
+                    {/* 中文参考 */}
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      <span className="font-medium">中文参考：</span>{getCurrentTaskChinese()}
+                    </div>
+                    
+                    {/* 提交结果显示 */}
+                    {showResult && inputState && (
+                      <div className="space-y-2">
+                        {/* 正确答案显示在用户输入的位置 */}
+                        {!inputState.correct && (
+                          <div className="bg-red-50 dark:bg-red-900/20 p-2 rounded">
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                              <span className="font-medium">正确答案：</span>
+                            </div>
+                            <div className="text-gray-800 dark:text-gray-200">
+                              {inputState.diff.map((seg, idx) => {
+                                if (seg.type === 'word' && seg.word) {
+                                  return (
+                                    <span
+                                      key={idx}
+                                      className={seg.correct ? 'px-0' : 'underline decoration-2 decoration-red-400 text-red-700 dark:text-red-400'}
+                                    >
+                                      {seg.word}
+                                      {idx < inputState.diff.length - 1 && inputState.diff[idx + 1].type === 'word' ? ' ' : ''}
+                                    </span>
+                                  )
+                                } else if (seg.type === 'punctuation' && seg.value) {
+                                  return (
+                                    <span key={idx} className="px-0">
+                                      {seg.value}
+                                    </span>
+                                  )
+                                }
+                                return null
+                              })}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* 成功提示 */}
+                        {inputState.correct && (
+                          <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                            <div className="text-sm text-green-700 dark:text-green-400">
+                              ✅ 回答正确！可以继续下一句。
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            )} */}
-
-            <div className="mt-3 flex gap-2">
-              <button 
-                onClick={onNext} 
-                className={`px-3 py-1 rounded ${
-                  isLastTask && lastResultCorrect
-                    ? 'bg-green-600 text-white'
-                    : 'bg-blue-600 text-white'
-                }`}
-              >
-                {isLastTask && lastResultCorrect ? '完成' : '下一句'}
-              </button>
-              <button 
-                onClick={() => {
-                  if (currentTask) {
-                    const reviewItem: ReviewItem = {
-                      promptIndex: currentTask.promptIndex,
-                      targetIndex: currentTask.targetIndex,
-                      diff: markDifferencesByWord(targetText, userInput || targetText, rolenames),
-                      passed: true,
-                      userInput: userInput || targetText
-                    }
-                    setReviewQueue(prev => [...prev, reviewItem])
-                    onNext()
-                  }
-                }} 
-                className="px-3 py-1 bg-green-600 text-white rounded"
-              >通过</button>
             </div>
-          </div>
+          )
+        })}
+      </div>
+
+      {/* 操作按钮区域 */}
+      <div className="flex gap-2">
+        {/* 提交按钮始终显示 */}
+        <button
+          onClick={onSubmit}
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-1 max-w-xs"
+        >提交</button>
+        
+        {/* 显示答案按钮 */}
+        <button
+          onClick={() => {
+            setShowResult(true)
+            setLastResultCorrect(null)
+            setLastDiff(markDifferencesByWord(
+              dialogue[currentTask.index].text,
+              getCurrentInputValue(),
+              rolenames
+            ))
+          }}
+          className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors flex-1 max-w-xs"
+        >显示答案</button>
+        
+        {/* 下一句按钮：只有当答案正确时才显示 */}
+        {showResult && lastResultCorrect && (
+          <button 
+            onClick={onNext} 
+            className={`px-4 py-2 rounded transition-colors flex-1 max-w-xs ${isLastTask ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+          >
+            {isLastTask ? '完成' : '下一句'}
+          </button>
         )}
       </div>
     </div>
