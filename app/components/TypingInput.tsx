@@ -127,6 +127,49 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
       }
       return
     }
+    
+    // 处理上箭头键
+    if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      const cursorPos = e.currentTarget.selectionStart
+      
+      if (cursorPos && cursorPos !== 0) {
+        // 光标在单词中间，移动到单词开头
+        e.currentTarget.setSelectionRange(0, 0)
+      } else if (wordIndex > 0) {
+        // 光标在单词开头，移动到上一个单词
+        const prevIndex = wordIndex - 1
+        const prevInput = inputRefs.current[prevIndex]
+        if (prevInput) {
+          prevInput.focus()
+          const length = prevInput.value.length
+          prevInput.setSelectionRange(length, length)
+        }
+      }
+      return
+    }
+    
+    // 处理下箭头键
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      const cursorPos = e.currentTarget.selectionStart
+      const inputValue = e.currentTarget.value
+      const totalWords = segments.filter(s => s.type === 'word').length
+      
+      if (cursorPos && cursorPos < inputValue.length) {
+        // 光标在单词中间，移动到单词结尾
+        e.currentTarget.setSelectionRange(inputValue.length, inputValue.length)
+      } else if (wordIndex < totalWords - 1) {
+        // 光标在单词结尾，移动到下一个单词
+        const nextIndex = wordIndex + 1
+        const nextInput = inputRefs.current[nextIndex]
+        if (nextInput) {
+          nextInput.focus()
+          nextInput.setSelectionRange(0, 0)
+        }
+      }
+      return
+    }
   }
 
   const measureTextWidth = (text: string): number => {
@@ -142,7 +185,6 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
   const getInputWidth = (targetWord: string, userWord: string): string => {
     const textToMeasure = userWord || targetWord
     const width = measureTextWidth(textToMeasure)
-    console.log('测量宽度', textToMeasure, width)
     const minWidth = measureTextWidth(targetWord)
     const finalWidth = Math.max(width, minWidth)
     return `${finalWidth + 2}px`
@@ -165,12 +207,9 @@ export default function TypingInput({ targetText, value, onChange, disabled = fa
     })
   }
 
-  useEffect(() => {
-    !disabled && inputRefs.current[0]?.focus()
-  }, [disabled])
-
   useLayoutEffect(() => {
     updateAllWordWidth()
+    inputRefs.current[0]?.focus()
   }, [targetText])
 
   return (

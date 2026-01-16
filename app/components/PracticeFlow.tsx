@@ -40,18 +40,22 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [lastDiff, setLastDiff] = useState<diffType>([])
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
-  const [isReviewMode, setIsReviewMode] = useState(false)
   const currentHandler: React.MutableRefObject<((e: KeyboardEvent) => void) | null> = React.useRef(null)
 
   const handleGlobalKeyDown = (e: KeyboardEvent) => {
     if(e.key !== 'Enter') return
     e.preventDefault()
-    showResult ? onNext() : onSubmit()
+    lastResultCorrect ? onNext() : onSubmit()
   }
   
   useEffect(() => {
     currentHandler.current = handleGlobalKeyDown
   })
+
+  const getDiffCorrect = (diff: diffType) => {
+    if (!diff || diff.length === 0) return false
+    return diff.filter(item => item.type === 'word').every(item => item.correct)
+  }
 
   React.useEffect(() => {
     function handler (e: KeyboardEvent) {
@@ -83,12 +87,11 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
     setLastResultCorrect(null)
     setReviewQueue([])
-    setIsReviewMode(false)
   }, [dialogue])
 
   const currentTask = tasks[current]
   // 从rolename中提取角色名称数组
-  const rolenames = rolename.map(item => item.name).filter(name => name !== '')
+  const rolenames = rolename.map(item => [item.name, ...item.name.split(' ')]).flat().filter(name => name !== '')
 
   // 模拟语音播放功能
   const handlePlayAudio = (text: string) => {
@@ -98,11 +101,12 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const onSubmit = () => {
     if (!currentTask) return
     const ref = dialogue[currentTask.index].text
-    const input = userInputs[currentTask.index]?.value?.replace(/,/g, ' ') || ''
+    const input = userInputs[currentTask.index]?.value || '' //
 
-    const correct = isInputCorrect(ref, input)
-    const similarity = calculateSimilarity(ref, input)
+    // const correct = isInputCorrect(ref, input?.replace(/,/g, ' ') || '')
+    const similarity = calculateSimilarity(ref, input?.replace(/,/g, ' ') || '')
     const diff = markDifferencesByWord(ref, input, rolenames)
+    const correct = getDiffCorrect(diff)
     setLastDiff(diff)
     setLastResultCorrect(correct)
     setShowResult(true)
@@ -138,8 +142,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         }
       })
     }
-
-    console.log('提交结果', { correct, similarity })
   }
 
   const onNext = () => {
@@ -163,7 +165,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
       // 进入复习模式，重新练习错误的句子
       setTasks(incorrectTasks)
       setCurrent(0)
-      setIsReviewMode(true)
     } else {
       // 所有句子都正确，显示练习结果
       setShowPracticeResult(true)
@@ -195,7 +196,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setShowResult(false)
     setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
     setLastResultCorrect(null)
-    setIsReviewMode(false)
   }
 
   const handleExit = () => {
@@ -203,19 +203,20 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   }
 
   // 获取角色头像样式
-  // const getRoleAvatarStyle = (role: string) => {
-  //   const roleStyles = {
-  //     A: {
-  //       bg: 'bg-pink-500 dark:bg-pink-600',
-  //       initial: '👧'
-  //     },
-  //     B: {
-  //       bg: 'bg-blue-500 dark:bg-blue-600',
-  //       initial: '👵'
-  //     }
-  //   }
-  //   return roleStyles[role]
-  // }
+  const getRoleAvatarStyle = (role: string) => {
+    type RoleStyle = { bg: string; initial: string }
+    const roleStyles: Record<string, RoleStyle> = {
+      A: {
+        bg: 'bg-pink-500 dark:bg-pink-600',
+        initial: '👧'
+      },
+      B: {
+        bg: 'bg-blue-500 dark:bg-blue-600',
+        initial: '👵'
+      }
+    }
+    return roleStyles[role] || ''
+  }
 
   // 获取当前任务的中文翻译
   const getCurrentTaskChinese = () => {
@@ -250,7 +251,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
       <div className="mb-6 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">{isReviewMode ? '复习练习' : '对话练习'}</h3>
+        <h3 className="text-lg font-semibold">对话练习</h3>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500 dark:text-gray-400">进度：{current + 1}/{tasks.length}</span>
           <button
@@ -266,12 +267,12 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         {tasks.slice(0, current).map((task, idx) => {
           const msg = dialogue[task.index]
           const inputState = userInputs[task.index]
-          // const roleStyle = getRoleAvatarStyle(msg.role)
+          const roleStyle = getRoleAvatarStyle(msg.role)
           return (
             <div key={idx} className="flex items-start gap-3">
-              {/* <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
                 {roleStyle.initial}
-              </div> */}
+              </div>
               <div className="flex-1 space-y-1">
                 <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 relative">
                   <button
@@ -296,12 +297,12 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         {tasks.slice(current, current + 1).map((task, idx) => {
           const msg = dialogue[task.index]
           const inputState = userInputs[task.index]
-          // const roleStyle = getRoleAvatarStyle(msg.role)
+          const roleStyle = getRoleAvatarStyle(msg.role)
           return (
             <div key={idx} className="flex items-start gap-3">
-              {/* <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-lg font-bold ${roleStyle.bg}`}>
                 {roleStyle.initial}
-              </div> */}
+              </div>
               <div className="flex-1 space-y-1">
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 relative">
                   <button
@@ -351,7 +352,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
                                   )
                                 } else if (seg.type === 'punctuation' && seg.value) {
                                   return (
-                                    <span key={idx} className="px-0">
+                                    <span key={idx} className="px-0 pr-1">
                                       {seg.value}
                                     </span>
                                   )
