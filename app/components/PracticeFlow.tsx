@@ -161,9 +161,10 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
 
     // 检查是否有错误的句子需要复习
     if (reviewIndex < reviewQueue.length) {
-      setReviewIndex( reviewIndex + 1)
-      if(current > reviewQueue[reviewIndex].targetIndex)
-      setCurrent(reviewQueue[reviewIndex].targetIndex)
+      const newReviewIndex = reviewIndex + 1
+      if(current > reviewQueue[newReviewIndex].targetIndex) setRoundNumber(roundNumber + 1)
+      setReviewIndex( newReviewIndex)
+      setCurrent(reviewQueue[newReviewIndex].targetIndex)
       return
     } 
     
