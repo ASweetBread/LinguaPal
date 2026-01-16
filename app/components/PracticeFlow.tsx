@@ -21,6 +21,7 @@ type ReviewItem = {
   diff: diffType
   passed: boolean
   userInput: string
+  roundNumber: number
 }
 
 type UserInputState = {
@@ -41,6 +42,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const [showPracticeResult, setShowPracticeResult] = useState(false)
   const [reviewQueue, setReviewQueue] = useState<ReviewItem[]>([])
   const currentHandler: React.MutableRefObject<((e: KeyboardEvent) => void) | null> = React.useRef(null)
+  const [ roundNumber, setRoundNumber ] = useState(1)
+  const [ reviewIndex, setReviewIndex ] = useState(0)
 
   const handleGlobalKeyDown = (e: KeyboardEvent) => {
     if(e.key !== 'Enter') return
@@ -126,7 +129,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         targetIndex: currentTask.index,
         diff,
         passed: false,
-        userInput: input
+        userInput: input,
+        roundNumber: roundNumber,
       }
       setReviewQueue(prev => [...prev, reviewItem])
 
@@ -156,19 +160,14 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     }
 
     // 检查是否有错误的句子需要复习
-    const incorrectTasks = userInputs
-      .map((input, index) => ({ index, ...input }))
-      .filter(item => item.correct === false)
-      .map(item => ({ index: item.index }))
-
-    if (incorrectTasks.length > 0) {
-      // 进入复习模式，重新练习错误的句子
-      setTasks(incorrectTasks)
-      setCurrent(0)
-    } else {
-      // 所有句子都正确，显示练习结果
-      setShowPracticeResult(true)
-    }
+    if (reviewIndex < reviewQueue.length) {
+      setReviewIndex( reviewIndex + 1)
+      if(current > reviewQueue[reviewIndex].targetIndex)
+      setCurrent(reviewQueue[reviewIndex].targetIndex)
+      return
+    } 
+    
+    setShowPracticeResult(true)
   }
 
   // 更新用户输入
