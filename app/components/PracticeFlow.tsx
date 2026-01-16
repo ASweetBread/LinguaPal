@@ -35,7 +35,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
 
   const [tasks, setTasks] = useState<Task[]>([])
   const [current, setCurrent] = useState(0)
-  const [userInputs, setUserInputs] = useState<UserInputState[]>([])
+  const [userInputs, setUserInputs] = useState<UserInputState>({ value: '', correct: null, diff: [] })
   const [showResult, setShowResult] = useState(false)
   const [lastResultCorrect, setLastResultCorrect] = useState<boolean | null>(null)
   const [lastDiff, setLastDiff] = useState<diffType>([])
@@ -86,8 +86,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setCurrent(0)
     setShowResult(false)
     setShowPracticeResult(false)
-    // 初始化用户输入状态数组
-    setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
+    // 初始化单个用户输入状态对象
+    setUserInputs({ value: '', correct: null, diff: [] })
     setLastResultCorrect(null)
     setReviewQueue([])
   }, [dialogue])
@@ -104,7 +104,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   const onSubmit = () => {
     if (!currentTask) return
     const ref = dialogue[currentTask.index].text
-    const input = userInputs[currentTask.index]?.value || '' //
+    const input = userInputs.value // 直接使用单个对象的value
 
     // const correct = isInputCorrect(ref, input?.replace(/,/g, ' ') || '')
     const similarity = calculateSimilarity(ref, input?.replace(/,/g, ' ') || '')
@@ -114,16 +114,15 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setLastResultCorrect(correct)
     setShowResult(true)
 
-    // 更新用户输入状态
-    setUserInputs(prev => {
-      const newInputs = [...prev]
-      newInputs[currentTask.index] = { ...newInputs[currentTask.index], correct, diff }
-      return newInputs
-    })
+    // 更新单个用户输入状态对象
+    setUserInputs(prev => ({
+      ...prev,
+      correct,
+      diff
+    }))
 
     // 如果当前输入错误，且是第一次提交失败，添加到复习队列
-    const existingInputState = userInputs[currentTask.index]
-    if (!correct && (!existingInputState || existingInputState.correct !== false)) {
+    if (!correct && userInputs.correct !== false) {
       const reviewItem: ReviewItem = {
         promptIndex: currentTask.index - 1, // 使用前一句作为提示
         targetIndex: currentTask.index,
@@ -152,6 +151,9 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setShowResult(false)
     setLastResultCorrect(null)
     setLastDiff([])
+    
+    // 重置userInputs对象，准备下一句
+    setUserInputs({ value: '', correct: null, diff: [] })
 
     const nextIndex = current + 1
     if (nextIndex < tasks.length) {
@@ -174,17 +176,15 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
   // 更新用户输入
   const handleInputChange = (value: string) => {
     if (!currentTask) return
-    setUserInputs(prev => {
-      const newInputs = [...prev]
-      newInputs[currentTask.index] = { ...newInputs[currentTask.index], value }
-      return newInputs
-    })
+    setUserInputs(prev => ({
+      ...prev,
+      value
+    }))
   }
 
   // 获取当前输入值
   const getCurrentInputValue = () => {
-    if (!currentTask) return ''
-    return userInputs[currentTask.index]?.value || ''
+    return userInputs.value || ''
   }
 
   const handleRestart = () => {
@@ -194,7 +194,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
     setTasks(allTasks)
     setCurrent(0)
     setShowResult(false)
-    setUserInputs(dialogue.map(() => ({ value: '', correct: null, diff: [] })))
+    // 重置为单个用户输入状态对象
+    setUserInputs({ value: '', correct: null, diff: [] })
     setLastResultCorrect(null)
   }
 
@@ -266,7 +267,6 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         {/* 显示当前任务之前的所有已完成对话 */}
         {tasks.slice(0, current).map((task, idx) => {
           const msg = dialogue[task.index]
-          const inputState = userInputs[task.index]
           const roleStyle = getRoleAvatarStyle(msg.role)
           return (
             <div key={idx} className="flex items-start gap-3">
@@ -296,7 +296,8 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
         {/* 当前任务的输入框 */}
         {tasks.slice(current, current + 1).map((task, idx) => {
           const msg = dialogue[task.index]
-          const inputState = userInputs[task.index]
+          // 直接使用当前的userInputs对象，而不是从数组中获取
+          const inputState = userInputs
           const roleStyle = getRoleAvatarStyle(msg.role)
           return (
             <div key={idx} className="flex items-start gap-3">
@@ -330,7 +331,7 @@ export default function PracticeFlow({ onFinish }: { onFinish?: () => void }) {
                     </div>
                     
                     {/* 提交结果显示 */}
-                    {showResult && inputState && (
+                    {showResult && (
                       <div className="space-y-2">
                         {/* 正确答案显示在用户输入的位置 */}
                         {!inputState.correct && (

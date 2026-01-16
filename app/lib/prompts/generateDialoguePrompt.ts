@@ -86,7 +86,7 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
 返回格式必须是一个 JSON 对象，结构如下：
 {
   "dialogue": [
-    { "role": "A或B", "scentence": [{ "text": "英文对话文本", "text_cn": "${userLanguage}翻译（人名不必翻译）" }] },
+    { "role": "A或B", "scentence": [{ "text": "英文对话文本", "text_cn": "${userLanguage}翻译（人名不必翻译，严谨地扣住了原文的词汇，不添加未明确说明的情绪）" }] },
     ... // 4-8个对象，代表对话回合
   ],
   "vocabulary": [
@@ -99,6 +99,7 @@ export const SYSTEM_PROMPT = (keyword: string, newWordsPercent: string, masteryL
   ],
   "alreadyTrainedScope": "本次训练核心诉求范围",
   "isFullTrained": "是否包含全部核心诉求",
+  "simpleWord": [] // 对话中出现的简单词汇列表，比如: ["a", "an", "the", "is", "are", "was", "were"]等
 }
 JSON说明：
 1.vocabulary
