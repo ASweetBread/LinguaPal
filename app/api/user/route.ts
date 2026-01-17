@@ -1,14 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { UserService } from './service';
+import { NextRequest, NextResponse } from "next/server";
+import { UserService } from "./service";
 
 // 获取用户列表
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '20');
-    const id = searchParams.get('id');
-    const username = searchParams.get('username');
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const id = searchParams.get("id");
+    const username = searchParams.get("username");
 
     let result;
     if (id) {
@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: result
+      data: result,
     });
   } catch (error) {
-    console.error('API获取用户失败:', error);
+    console.error("API获取用户失败:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : '获取用户失败' },
-      { status: error instanceof Error && error.message === '用户不存在' ? 404 : 500 }
+      { success: false, error: error instanceof Error ? error.message : "获取用户失败" },
+      { status: error instanceof Error && error.message === "用户不存在" ? 404 : 500 },
     );
   }
 }
@@ -46,23 +46,19 @@ export async function POST(request: NextRequest) {
       password,
       currentLevel,
       dailyGoal,
-      vocabularyAbility
+      vocabularyAbility,
     });
 
     return NextResponse.json({
       success: true,
-      data: newUser
+      data: newUser,
     });
   } catch (error) {
-    console.error('API创建用户失败:', error);
-    const errorMessage = error instanceof Error ? error.message : '创建用户失败';
-    const statusCode = errorMessage === '用户名已存在' ? 409 : 
-                       errorMessage === '缺少必要参数' ? 400 : 500;
-    
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: statusCode }
-    );
+    console.error("API创建用户失败:", error);
+    const errorMessage = error instanceof Error ? error.message : "创建用户失败";
+    const statusCode = errorMessage === "用户名已存在" ? 409 : errorMessage === "缺少必要参数" ? 400 : 500;
+
+    return NextResponse.json({ success: false, error: errorMessage }, { status: statusCode });
   }
 }
 
@@ -73,10 +69,7 @@ export async function PUT(request: NextRequest) {
     const { id, username, password, currentLevel, dailyGoal, vocabularyAbility, totalStudyMinutes } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: '缺少用户ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "缺少用户ID" }, { status: 400 });
     }
 
     const updatedUser = await UserService.updateUser(parseInt(id), {
@@ -85,23 +78,19 @@ export async function PUT(request: NextRequest) {
       currentLevel,
       dailyGoal,
       vocabularyAbility,
-      totalStudyMinutes
+      totalStudyMinutes,
     });
 
     return NextResponse.json({
       success: true,
-      data: updatedUser
+      data: updatedUser,
     });
   } catch (error) {
-    console.error('API更新用户失败:', error);
-    const errorMessage = error instanceof Error ? error.message : '更新用户失败';
-    const statusCode = errorMessage === '用户不存在' ? 404 :
-                       errorMessage === '用户名已存在' ? 409 : 500;
-    
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: statusCode }
-    );
+    console.error("API更新用户失败:", error);
+    const errorMessage = error instanceof Error ? error.message : "更新用户失败";
+    const statusCode = errorMessage === "用户不存在" ? 404 : errorMessage === "用户名已存在" ? 409 : 500;
+
+    return NextResponse.json({ success: false, error: errorMessage }, { status: statusCode });
   }
 }
 
@@ -109,29 +98,23 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
+    const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json(
-        { success: false, error: '缺少用户ID' },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: "缺少用户ID" }, { status: 400 });
     }
 
     await UserService.deleteUser(parseInt(id));
 
     return NextResponse.json({
       success: true,
-      message: '用户删除成功'
+      message: "用户删除成功",
     });
   } catch (error) {
-    console.error('API删除用户失败:', error);
-    const errorMessage = error instanceof Error ? error.message : '删除用户失败';
-    const statusCode = errorMessage === '用户不存在' ? 404 : 500;
-    
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: statusCode }
-    );
+    console.error("API删除用户失败:", error);
+    const errorMessage = error instanceof Error ? error.message : "删除用户失败";
+    const statusCode = errorMessage === "用户不存在" ? 404 : 500;
+
+    return NextResponse.json({ success: false, error: errorMessage }, { status: statusCode });
   }
 }

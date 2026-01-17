@@ -1,4 +1,4 @@
-import clientFetch from './clientApi';
+import clientFetch from "./clientApi";
 
 // 词汇测试相关的API客户端
 export interface VocabularyTestParams {
@@ -26,36 +26,36 @@ export interface VocabularyTestResultParams {
 
 // 生成词汇测试
 export async function generateVocabularyTest(params: VocabularyTestParams) {
-  return clientFetch('/api/vocabulary-test', {
-    method: 'POST',
+  return clientFetch("/api/vocabulary-test", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'generate-vocabulary-test',
+    name: "generate-vocabulary-test",
   });
 }
 
 // 提交词汇测试结果
 export async function submitVocabularyTest(params: VocabularyTestParams) {
-  return clientFetch('/api/vocabulary-test', {
-    method: 'POST',
+  return clientFetch("/api/vocabulary-test", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'submit-vocabulary-test',
+    name: "submit-vocabulary-test",
   });
 }
 
 // 更新用户词汇测试结果
 export async function updateVocabularyTestResult(params: VocabularyTestResultParams) {
-  return clientFetch('/api/vocabulary-test-result', {
-    method: 'POST',
+  return clientFetch("/api/vocabulary-test-result", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'update-vocabulary-test-result',
+    name: "update-vocabulary-test-result",
   });
 }

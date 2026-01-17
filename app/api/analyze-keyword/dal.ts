@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -17,28 +17,28 @@ export class KeywordAnalysisDAL {
     userId?: number;
   }) {
     const { keyword, analysis, userId } = data;
-    
+
     // 检查关键字是否已存在
     const existingKeyword = await prisma.keyword.findFirst({
       where: {
         name: keyword,
-        userId: userId || undefined
-      }
+        userId: userId || undefined,
+      },
     });
-    
+
     if (existingKeyword) {
       // 更新现有关键字
       return prisma.keyword.update({
         where: {
-          id: existingKeyword.id
+          id: existingKeyword.id,
         },
         data: {
           coreRequirements: analysis.coreRequirements,
           difficultyLevel: analysis.difficultyLevel,
           supplements: analysis.supplements,
           vocabularyScope: analysis.vocabularyScope,
-          keySentencePatterns: analysis.keySentencePatterns
-        }
+          keySentencePatterns: analysis.keySentencePatterns,
+        },
       });
     } else {
       // 创建新关键字
@@ -50,27 +50,24 @@ export class KeywordAnalysisDAL {
           supplements: analysis.supplements,
           vocabularyScope: analysis.vocabularyScope,
           keySentencePatterns: analysis.keySentencePatterns,
-          userId: userId as number // userId是必填字段
-        }
+          userId: userId as number, // userId是必填字段
+        },
       });
     }
   }
-  
+
   // 查找或创建关键字
-  static async findOrCreateKeyword(params: {
-    name: string;
-    userId: number;
-  }) {
+  static async findOrCreateKeyword(params: { name: string; userId: number }) {
     const { name, userId } = params;
-    
+
     // 查找关键字
     const existingKeyword = await prisma.keyword.findFirst({
       where: {
         name,
-        userId
-      }
+        userId,
+      },
     });
-    
+
     if (existingKeyword) {
       return existingKeyword;
     } else {
@@ -78,45 +75,42 @@ export class KeywordAnalysisDAL {
       return prisma.keyword.create({
         data: {
           name,
-          userId
-        }
+          userId,
+        },
       });
     }
   }
-  
+
   // 根据名称查找关键字
-  static async findKeyword(params: {
-    name: string;
-    userId?: number;
-  }) {
+  static async findKeyword(params: { name: string; userId?: number }) {
     const { name, userId } = params;
-    
+
     return prisma.keyword.findFirst({
       where: {
         name,
-        ...(userId !== undefined && { userId })
-      }
+        ...(userId !== undefined && { userId }),
+      },
     });
   }
-  
+
   // 获取用户的关键字分析历史
   static async getHistory(userId: number) {
     return prisma.keyword.findMany({
       where: {
-        userId
+        userId,
       },
       orderBy: {
-        id: 'desc' // 使用id代替createdAt排序
-      }
+        id: "desc", // 使用id代替createdAt排序
+      },
     });
   }
-  
+
   // 获取单个关键字分析结果
   static async getAnalysis(id: number) {
     return prisma.keyword.findUnique({
       where: {
-        id
-      }
+        id,
+      },
     });
   }
 }

@@ -1,5 +1,5 @@
-import clientFetch from './clientApi';
-import { UserConfigState } from '../store/userConfigStore';
+import clientFetch from "./clientApi";
+import { UserConfigState } from "../store/userConfigStore";
 
 // 关键字分析相关的接口
 export interface KeywordAnalysisResult {
@@ -21,7 +21,7 @@ export interface GenerateDialogueParams {
   scene: string;
   mode: string;
   aiService: string;
-  dialogueConfig: UserConfigState['dialogueConfig'];
+  dialogueConfig: UserConfigState["dialogueConfig"];
   userId: string;
   currentLevel: string;
   vocabularyAbility: string;
@@ -42,19 +42,14 @@ export interface GenerateDialogueResponse {
 }
 
 // 分析关键字
-export async function analyzeKeyword(params: {
-  keyword: string;
-  mode: string;
-  userId: string;
-  aiService: string;
-}) {
-  return clientFetch('/api/analyze-keyword', {
-    method: 'POST',
+export async function analyzeKeyword(params: { keyword: string; mode: string; userId: string; aiService: string }) {
+  return clientFetch("/api/analyze-keyword", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'analyze-keyword',
+    name: "analyze-keyword",
   });
 }
 
@@ -64,27 +59,27 @@ export async function storeKeywordAnalysisResult(params: {
   analysis: KeywordAnalysisResult;
   userId: string;
 }) {
-  return clientFetch('/api/save-keyword-analysis', {
-    method: 'POST',
+  return clientFetch("/api/save-keyword-analysis", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       ...params,
-      userId: parseInt(params.userId)
+      userId: parseInt(params.userId),
     }),
-    name: 'store-keyword-analysis-result',
+    name: "store-keyword-analysis-result",
   });
 }
 
 // 生成对话
 export async function generateDialogue(params: GenerateDialogueParams) {
-  return clientFetch('/api/generate-dialogue', {
-    method: 'POST',
+  return clientFetch("/api/generate-dialogue", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'generate-dialogue',
+    name: "generate-dialogue",
   });
 }

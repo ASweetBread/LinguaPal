@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -17,18 +17,18 @@ export class VocabularyDAL {
 
     // 构建查询条件
     const where: any = {};
-    
+
     if (userId) {
       where.userId = userId;
     }
-    
+
     if (search) {
       where.OR = [
-        { word: { contains: search, mode: 'insensitive' } },
-        { meanings: { contains: search, mode: 'insensitive' } }
+        { word: { contains: search, mode: "insensitive" } },
+        { meanings: { contains: search, mode: "insensitive" } },
       ];
     }
-    
+
     if (difficulty) {
       where.difficultyLevel = difficulty;
     }
@@ -42,15 +42,15 @@ export class VocabularyDAL {
       include: {
         relations: {
           include: {
-            phrase: true
-          }
-        }
+            phrase: true,
+          },
+        },
       },
       orderBy: {
-        learnedAt: 'desc'
+        learnedAt: "desc",
       },
       skip: offset,
-      take: limit
+      take: limit,
     });
 
     return {
@@ -59,8 +59,8 @@ export class VocabularyDAL {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -71,10 +71,10 @@ export class VocabularyDAL {
       include: {
         relations: {
           include: {
-            phrase: true
-          }
-        }
-      }
+            phrase: true,
+          },
+        },
+      },
     });
   }
 
@@ -83,8 +83,8 @@ export class VocabularyDAL {
     return await prisma.word.findFirst({
       where: {
         word,
-        userId
-      }
+        userId,
+      },
     });
   }
 
@@ -98,28 +98,31 @@ export class VocabularyDAL {
     userId: number;
   }) {
     return await prisma.word.create({
-      data
+      data,
     });
   }
 
   // 更新单词
-  static async updateWord(id: number, data: {
-    word?: string;
-    phonetic?: string;
-    meanings?: string;
-    partOfSpeech?: string;
-    difficultyLevel?: string;
-  }) {
+  static async updateWord(
+    id: number,
+    data: {
+      word?: string;
+      phonetic?: string;
+      meanings?: string;
+      partOfSpeech?: string;
+      difficultyLevel?: string;
+    },
+  ) {
     return await prisma.word.update({
       where: { id },
-      data
+      data,
     });
   }
 
   // 删除单词
   static async deleteWord(id: number) {
     return await prisma.word.delete({
-      where: { id }
+      where: { id },
     });
   }
 
@@ -128,7 +131,7 @@ export class VocabularyDAL {
     const result = await prisma.word.findMany({
       where: { userId },
       select: { difficultyLevel: true },
-      distinct: ['difficultyLevel']
+      distinct: ["difficultyLevel"],
     });
 
     return result
@@ -139,23 +142,29 @@ export class VocabularyDAL {
   // 获取用户单词统计信息
   static async getUserWordStats(userId: number) {
     const total = await prisma.word.count({
-      where: { userId }
+      where: { userId },
     });
 
     const byDifficulty = await prisma.word.groupBy({
-      by: ['difficultyLevel'],
+      by: ["difficultyLevel"],
       where: { userId },
-      _count: { difficultyLevel: true }
+      _count: { difficultyLevel: true },
     });
 
     return {
       total,
-      byDifficulty: byDifficulty.reduce((acc: Record<string, number>, item: { difficultyLevel: string | null; _count: { difficultyLevel: number } }) => {
-        if (item.difficultyLevel) {
-          acc[item.difficultyLevel] = item._count.difficultyLevel;
-        }
-        return acc;
-      }, {} as Record<string, number>)
+      byDifficulty: byDifficulty.reduce(
+        (
+          acc: Record<string, number>,
+          item: { difficultyLevel: string | null; _count: { difficultyLevel: number } },
+        ) => {
+          if (item.difficultyLevel) {
+            acc[item.difficultyLevel] = item._count.difficultyLevel;
+          }
+          return acc;
+        },
+        {} as Record<string, number>,
+      ),
     };
   }
 }

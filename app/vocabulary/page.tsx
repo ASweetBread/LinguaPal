@@ -1,9 +1,9 @@
-'use client';
-import Link from 'next/link'
-import NavBar from '../components/NavBar';
-import VocabularyTest from '../components/VocabularyTest';
-import WordList from '../components/VocabularyList';
-import { useState } from 'react';
+"use client";
+import Link from "next/link";
+import NavBar from "../components/NavBar";
+import VocabularyTest from "../components/VocabularyTest";
+import WordList from "../components/VocabularyList";
+import { useState } from "react";
 
 // 定义底部状态栏组件
 function BottomStatusBar() {
@@ -31,12 +31,12 @@ function VocabularyList() {
           </button>
         </div>
         <VocabularyTest isOpen={isTestOpen} onOpenChange={setIsTestOpen} />
-        
+
         {/* 单词列表容器 */}
         <WordList />
       </div>
     </main>
-  )
+  );
 }
 
 export default function VocabularyPage() {
@@ -46,5 +46,5 @@ export default function VocabularyPage() {
       <VocabularyList />
       <BottomStatusBar />
     </div>
-  )
+  );
 }

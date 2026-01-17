@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { VocabularyItem } from '../types';
+import type { VocabularyItem } from "../types";
 
 // 定义词汇表模块的状态类型
 export interface VocabularyState {

@@ -1,6 +1,6 @@
-import { SYSTEM_PROMPT, TARGET_TEST_PROMPT, ANALYSIS_KEYWORD_PROMPT } from './generateDialoguePrompt';
-import { VOCABULARY_PROMPT } from './vocabularyTestPrompt';
-import { RESULT_ANALYZ_PROMPT } from './resultAnalyzPrompt';
+import { SYSTEM_PROMPT, TARGET_TEST_PROMPT, ANALYSIS_KEYWORD_PROMPT } from "./generateDialoguePrompt";
+import { VOCABULARY_PROMPT } from "./vocabularyTestPrompt";
+import { RESULT_ANALYZ_PROMPT } from "./resultAnalyzPrompt";
 
 /**
  * 生成对话提示词的函数
@@ -17,13 +17,13 @@ import { RESULT_ANALYZ_PROMPT } from './resultAnalyzPrompt';
  * @returns 完整的提示词字符串
  */
 export const generateDialoguePrompt = (
-  keyword: string, 
-  newWordsPercent: string, 
-  masteryLevel: number, 
-  currentLevel: string, 
-  vocabularyAbility: string, 
-  vocabulary: string, 
-  userLanguage: string = '中文', 
+  keyword: string,
+  newWordsPercent: string,
+  masteryLevel: number,
+  currentLevel: string,
+  vocabularyAbility: string,
+  vocabulary: string,
+  userLanguage: string = "中文",
   keywordAnalysis: {
     coreRequirements: string;
     difficultyLevel: string;
@@ -31,8 +31,8 @@ export const generateDialoguePrompt = (
     vocabularyScope: string;
     keySentencePatterns: string;
   },
-  alreadyTrainedScopes: string = '[]', // 默认值为空数组的JSON字符串
-  alreadyTrainedScopeIndex: number | undefined | null = undefined // 默认值为undefined
+  alreadyTrainedScopes: string = "[]", // 默认值为空数组的JSON字符串
+  alreadyTrainedScopeIndex: number | undefined | null = undefined, // 默认值为undefined
 ): string => {
   // 如果有keywordAnalysis，使用其中的参数覆盖传入的参数
   const finalCoreRequirements = keywordAnalysis?.coreRequirements;
@@ -45,20 +45,20 @@ export const generateDialoguePrompt = (
   const finalAlreadyTrainedScopeIndex = alreadyTrainedScopeIndex ?? 0;
 
   return SYSTEM_PROMPT(
-    keyword, 
-    newWordsPercent, 
-    masteryLevel, 
-    currentLevel, 
-    vocabularyAbility, 
-    vocabulary, 
-    userLanguage, 
-    finalCoreRequirements, 
-    finalDifficultyLevel, 
-    finalSupplementFocus, 
-    finalVocabularyRange, 
+    keyword,
+    newWordsPercent,
+    masteryLevel,
+    currentLevel,
+    vocabularyAbility,
+    vocabulary,
+    userLanguage,
+    finalCoreRequirements,
+    finalDifficultyLevel,
+    finalSupplementFocus,
+    finalVocabularyRange,
     finalSentenceStructureFocus,
     alreadyTrainedScopes,
-    finalAlreadyTrainedScopeIndex
+    finalAlreadyTrainedScopeIndex,
   );
 };
 
@@ -68,8 +68,8 @@ export const generateDialoguePrompt = (
  * @returns 完整的提示词字符串
  */
 export const generateVocabularyPrompt = (additionalText: string): string => {
-  if(!additionalText) {
-    additionalText = '无';
+  if (!additionalText) {
+    additionalText = "无";
   }
   return VOCABULARY_PROMPT(additionalText);
 };
@@ -104,12 +104,19 @@ export const generateAnalysisKeywordPrompt = (keyword: string): string => {
  * @returns 完整的提示词字符串
  */
 export const generateTargetTestPrompt = (
-  keyword: string, 
-  coreRequirements: string, 
-  difficultyLevel: string, 
-  supplementFocus: string, 
-  vocabularyRange: string, 
-  sentenceStructureFocus: string
+  keyword: string,
+  coreRequirements: string,
+  difficultyLevel: string,
+  supplementFocus: string,
+  vocabularyRange: string,
+  sentenceStructureFocus: string,
 ): string => {
-  return TARGET_TEST_PROMPT(keyword, coreRequirements, difficultyLevel, supplementFocus, vocabularyRange, sentenceStructureFocus);
+  return TARGET_TEST_PROMPT(
+    keyword,
+    coreRequirements,
+    difficultyLevel,
+    supplementFocus,
+    vocabularyRange,
+    sentenceStructureFocus,
+  );
 };

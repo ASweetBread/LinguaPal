@@ -32,4 +32,4 @@ export const VOCABULARY_PROMPT = (additionalText: string) => `请作为词汇能
 6. 额外规则：
    - ${additionalText}
    
-现在开始，请直接输出第一题JSON。`
+现在开始，请直接输出第一题JSON。`;

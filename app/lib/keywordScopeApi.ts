@@ -1,4 +1,4 @@
-import clientFetch from './clientApi';
+import clientFetch from "./clientApi";
 
 // 关键字范围相关的API客户端
 export interface KeywordScopeParams {
@@ -10,12 +10,12 @@ export interface KeywordScopeParams {
 
 // 更新关键字范围
 export async function updateKeywordScope(params: KeywordScopeParams) {
-  return clientFetch('/api/keyword-scope', {
-    method: 'POST',
+  return clientFetch("/api/keyword-scope", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
-    name: 'update-keyword-scope',
+    name: "update-keyword-scope",
   });
 }

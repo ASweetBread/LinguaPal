@@ -1,7 +1,7 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { Word, getVocabulary } from '../lib/vocabularyApi';
-import { Search, Filter, ChevronDown, Volume2, Edit, Trash2 } from 'lucide-react';
+"use client";
+import { useState, useEffect } from "react";
+import { Word, getVocabulary } from "../lib/vocabularyApi";
+import { Search, Filter, ChevronDown, Volume2, Edit, Trash2 } from "lucide-react";
 
 interface VocabularyListProps {
   userId?: number;
@@ -11,8 +11,8 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
   const [words, setWords] = useState<Word[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [difficultyFilter, setDifficultyFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [difficultyFilter, setDifficultyFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -27,7 +27,7 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
         search: searchTerm || undefined,
         difficulty: difficultyFilter || undefined,
         page: currentPage,
-        limit: 20
+        limit: 20,
       });
 
       if (response.success) {
@@ -35,10 +35,10 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
         setTotalPages(response.data.pagination.totalPages);
         setTotal(response.data.pagination.total);
       } else {
-        setError('获取单词列表失败');
+        setError("获取单词列表失败");
       }
     } catch (err) {
-      setError('获取单词列表失败');
+      setError("获取单词列表失败");
       console.error(err);
     } finally {
       setLoading(false);
@@ -66,9 +66,9 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
 
   // 播放单词发音
   const playPronunciation = (word: string) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US';
+      utterance.lang = "en-US";
       speechSynthesis.speak(utterance);
     }
   };
@@ -76,30 +76,30 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
   // 格式化学习时间
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("zh-CN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
   // 获取难度标签样式
   const getDifficultyBadgeClass = (difficulty?: string) => {
     switch (difficulty) {
-      case 'A1':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'A2':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      case 'B1':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
-      case 'B2':
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'C1':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
-      case 'C2':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      case "A1":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+      case "A2":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300";
+      case "B1":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+      case "B2":
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
+      case "C1":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+      case "C2":
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
+        return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
     }
   };
 
@@ -157,23 +157,23 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
                   {difficultyFilter}
                 </span>
               )}
-              <ChevronDown size={16} className={`transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={16} className={`transition-transform ${isFilterOpen ? "rotate-180" : ""}`} />
             </button>
 
             {isFilterOpen && (
               <div className="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
                 <div className="py-1">
                   <button
-                    onClick={() => handleDifficultyFilter('')}
-                    className={`block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${!difficultyFilter ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'dark:text-white'}`}
+                    onClick={() => handleDifficultyFilter("")}
+                    className={`block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${!difficultyFilter ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "dark:text-white"}`}
                   >
                     全部
                   </button>
-                  {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map((level) => (
+                  {["A1", "A2", "B1", "B2", "C1", "C2"].map((level) => (
                     <button
                       key={level}
                       onClick={() => handleDifficultyFilter(level)}
-                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${difficultyFilter === level ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'dark:text-white'}`}
+                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 ${difficultyFilter === level ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "dark:text-white"}`}
                     >
                       {level}
                     </button>
@@ -183,9 +183,7 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
             )}
           </div>
 
-          <div className="text-sm text-gray-500 dark:text-gray-400 ml-auto">
-            共 {total} 个单词
-          </div>
+          <div className="text-sm text-gray-500 dark:text-gray-400 ml-auto">共 {total} 个单词</div>
         </div>
       </div>
 
@@ -193,10 +191,10 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
       {words.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {searchTerm || difficultyFilter ? '没有找到匹配的单词' : '暂无记录的单词'}
+            {searchTerm || difficultyFilter ? "没有找到匹配的单词" : "暂无记录的单词"}
           </p>
           <p className="text-sm text-gray-400 dark:text-gray-500">
-            {searchTerm || difficultyFilter ? '尝试调整搜索条件' : '在学习过程中，系统会自动记录你遇到的生词'}
+            {searchTerm || difficultyFilter ? "尝试调整搜索条件" : "在学习过程中，系统会自动记录你遇到的生词"}
           </p>
         </div>
       ) : (
@@ -209,13 +207,9 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {word.word}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{word.word}</h3>
                     {word.phonetic && (
-                      <span className="text-gray-500 dark:text-gray-400 text-sm">
-                        [{word.phonetic}]
-                      </span>
+                      <span className="text-gray-500 dark:text-gray-400 text-sm">[{word.phonetic}]</span>
                     )}
                     <button
                       onClick={() => playPronunciation(word.word)}
@@ -225,24 +219,20 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
                       <Volume2 size={16} className="text-gray-500 dark:text-gray-400" />
                     </button>
                     {word.partOfSpeech && (
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {word.partOfSpeech}
-                      </span>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{word.partOfSpeech}</span>
                     )}
                     {word.difficultyLevel && (
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyBadgeClass(word.difficultyLevel)}`}>
+                      <span
+                        className={`px-2 py-0.5 text-xs rounded-full ${getDifficultyBadgeClass(word.difficultyLevel)}`}
+                      >
                         {word.difficultyLevel}
                       </span>
                     )}
                   </div>
-                  <p className="text-gray-700 dark:text-gray-300 mb-2">
-                    {word.meanings}
-                  </p>
+                  <p className="text-gray-700 dark:text-gray-300 mb-2">{word.meanings}</p>
                   <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                     <span>学习于 {formatDate(word.learnedAt)}</span>
-                    {word.relations && word.relations.length > 0 && (
-                      <span>关联 {word.relations.length} 个短语</span>
-                    )}
+                    {word.relations && word.relations.length > 0 && <span>关联 {word.relations.length} 个短语</span>}
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
@@ -270,7 +260,7 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
         <div className="flex justify-center mt-8">
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:text-white"
             >
@@ -280,7 +270,7 @@ export default function VocabularyList({ userId = 1 }: VocabularyListProps) {
               {currentPage} / {totalPages}
             </span>
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors dark:text-white"
             >

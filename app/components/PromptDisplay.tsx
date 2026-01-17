@@ -1,45 +1,45 @@
-'use client'
-import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Separator } from '@/components/ui/separator'
-import { copyToClipboard } from '@/lib/index'
-import { useToast } from '@/hooks/use-toast'
+"use client";
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
+import { copyToClipboard } from "@/lib/index";
+import { useToast } from "@/hooks/use-toast";
 
 interface PromptDisplayProps {
-  prompt: string
-  onSubmit: (result: string) => void
-  onClose: () => void
+  prompt: string;
+  onSubmit: (result: string) => void;
+  onClose: () => void;
 }
 
 export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDisplayProps) {
-  const [analysisResult, setAnalysisResult] = useState('')
-  const { toast } = useToast()
+  const [analysisResult, setAnalysisResult] = useState("");
+  const { toast } = useToast();
 
   const handleSubmit = () => {
     if (analysisResult.trim()) {
-      onSubmit(analysisResult.trim())
+      onSubmit(analysisResult.trim());
     }
-  }
+  };
 
   const handleCopyPrompt = async () => {
-    const success = await copyToClipboard(prompt)
+    const success = await copyToClipboard(prompt);
     if (success) {
       toast({
-        title: '复制成功',
-        description: '提示词已复制到剪贴板',
+        title: "复制成功",
+        description: "提示词已复制到剪贴板",
         duration: 2000,
-      })
+      });
     } else {
       toast({
-        title: '复制失败',
-        description: '请手动复制提示词',
-        variant: 'destructive',
+        title: "复制失败",
+        description: "请手动复制提示词",
+        variant: "destructive",
         duration: 2000,
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="inset-0 flex items-center justify-center z-50">
@@ -47,24 +47,14 @@ export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDispl
         <Card>
           <CardHeader>
             <CardTitle>提示词分析</CardTitle>
-            <CardDescription>
-              请使用下方提示词在AI平台获取分析结果，然后将结果粘贴到分析结果输入框中
-            </CardDescription>
+            <CardDescription>请使用下方提示词在AI平台获取分析结果，然后将结果粘贴到分析结果输入框中</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">提示词</label>
-              <Textarea
-                value={prompt}
-                readOnly
-                className="min-h-[300px] bg-gray-50"
-              />
+              <Textarea value={prompt} readOnly className="min-h-[300px] bg-gray-50" />
               <div className="mt-2 flex justify-end">
-                <Button
-                  onClick={handleCopyPrompt}
-                  variant="secondary"
-                  size="sm"
-                >
+                <Button onClick={handleCopyPrompt} variant="secondary" size="sm">
                   复制提示词
                 </Button>
               </div>
@@ -83,16 +73,10 @@ export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDispl
             </div>
 
             <div className="flex gap-3 justify-end">
-              <Button
-                onClick={onClose}
-                variant="secondary"
-              >
+              <Button onClick={onClose} variant="secondary">
                 取消
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={!analysisResult.trim()}
-              >
+              <Button onClick={handleSubmit} disabled={!analysisResult.trim()}>
                 提交分析结果
               </Button>
             </div>
@@ -100,5 +84,5 @@ export default function PromptDisplay({ prompt, onSubmit, onClose }: PromptDispl
         </Card>
       </div>
     </div>
-  )
+  );
 }

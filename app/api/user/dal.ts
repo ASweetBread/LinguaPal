@@ -1,14 +1,11 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 // 用户数据访问层
 export class UserDAL {
   // 获取用户列表
-  static async getUsers(params: {
-    page?: number;
-    limit?: number;
-  }) {
+  static async getUsers(params: { page?: number; limit?: number }) {
     const { page = 1, limit = 20 } = params;
     const offset = (page - 1) * limit;
 
@@ -18,13 +15,13 @@ export class UserDAL {
     // 获取用户列表
     const users = await prisma.user.findMany({
       include: {
-        config: true
+        config: true,
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: "desc",
       },
       skip: offset,
-      take: limit
+      take: limit,
     });
 
     return {
@@ -33,8 +30,8 @@ export class UserDAL {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -43,8 +40,8 @@ export class UserDAL {
     return await prisma.user.findUnique({
       where: { id },
       include: {
-        config: true
-      }
+        config: true,
+      },
     });
   }
 
@@ -53,8 +50,8 @@ export class UserDAL {
     return await prisma.user.findUnique({
       where: { username },
       include: {
-        config: true
-      }
+        config: true,
+      },
     });
   }
 
@@ -69,27 +66,30 @@ export class UserDAL {
     return await prisma.user.create({
       data,
       include: {
-        config: true
-      }
+        config: true,
+      },
     });
   }
 
   // 更新用户
-  static async updateUser(id: number, data: {
-    username?: string;
-    password?: string;
-    currentLevel?: string;
-    dailyGoal?: number;
-    vocabularyAbility?: string;
-    totalStudyMinutes?: number;
-    finalScore?: string;
-  }) {
+  static async updateUser(
+    id: number,
+    data: {
+      username?: string;
+      password?: string;
+      currentLevel?: string;
+      dailyGoal?: number;
+      vocabularyAbility?: string;
+      totalStudyMinutes?: number;
+      finalScore?: string;
+    },
+  ) {
     return await prisma.user.update({
       where: { id },
       data,
       include: {
-        config: true
-      }
+        config: true,
+      },
     });
   }
 
@@ -98,8 +98,8 @@ export class UserDAL {
     return await prisma.user.delete({
       where: { id },
       include: {
-        config: true
-      }
+        config: true,
+      },
     });
   }
 
@@ -107,8 +107,8 @@ export class UserDAL {
   static async checkUsernameExists(username: string) {
     return await prisma.user.findFirst({
       where: {
-        username
-      }
+        username,
+      },
     });
   }
 }

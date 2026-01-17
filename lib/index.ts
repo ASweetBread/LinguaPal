@@ -8,7 +8,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    console.error('复制到剪贴板失败:', error);
+    console.error("复制到剪贴板失败:", error);
     return false;
   }
 }

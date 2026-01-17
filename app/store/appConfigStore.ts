@@ -3,11 +3,11 @@ import { persist } from "zustand/middleware";
 
 // 定义应用基础配置模块的状态类型
 export interface AppConfigState {
-  theme: 'light' | 'dark';
+  theme: "light" | "dark";
   isLoading: boolean;
   error: string | null;
   toggleTheme: () => void;
-  updateTheme: (theme: 'light' | 'dark') => void;
+  updateTheme: (theme: "light" | "dark") => void;
   setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
   resetError: () => void;
@@ -17,12 +17,12 @@ export interface AppConfigState {
 export const useAppConfigStore = create<AppConfigState>()(
   persist(
     (set) => ({
-      theme: 'light',
+      theme: "light",
       isLoading: false,
       error: null,
       toggleTheme: () =>
         set((state) => ({
-          theme: state.theme === 'light' ? 'dark' : 'light'
+          theme: state.theme === "light" ? "dark" : "light",
         })),
       updateTheme: (theme) =>
         set(() => ({
@@ -45,8 +45,8 @@ export const useAppConfigStore = create<AppConfigState>()(
       name: "lingua-pal-app-config-storage", // localStorage的key
       // 不需要持久化isLoading和error状态
       partialize: (state) => ({
-        theme: state.theme
-      })
+        theme: state.theme,
+      }),
     },
   ),
 );

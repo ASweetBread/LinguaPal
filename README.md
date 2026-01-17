@@ -49,6 +49,8 @@ schema.prisma中 Keyword新增了几个字段，如下
 
 
 3.对话创建依据，现在是根据用户关键词创建，但是存在对话过于浅显的问题
+存入生词和错误记录，设定复习算法
+
 4.添加语音相关练习
 
 5.看单词知道怎么读的那个博主，要是能把她的技巧放在系统中，就更好了。
@@ -67,3 +69,20 @@ module.exports = {
   }
 }
 ```
+关键词模式
+1. 关键词
+  1. 关键词分析 :white_check_mark:
+  2. 关键词管理 :white_check_mark:
+2. 对话生成-提示词
+  1. 核心诉求拆分 :white_check_mark:
+  2. 词汇表引入 :white_check_mark:
+  3. 个人情况引入 :white_check_mark:
+3. 拼写练习
+  1. 练习逻辑 :white_check_mark:
+  2. 复习逻辑 :white_check_mark:
+  3. 结果展示 :white_check_mark:
+4. 生词管理
+  1. 查看生词 :white_check_mark:
+  2. 生词结构设计，复习功能设计
+  3. 查看，添加，删除生词
+  4. 复习计划实现

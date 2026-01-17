@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { DialogueItem, VocabularyItem } from '../types/dialogue';
+import type { DialogueItem, VocabularyItem } from "../types/dialogue";
 
 // 定义角色名称类型
 interface RoleName {
@@ -86,11 +86,11 @@ export const useDialogueStore = create<DialogueState>()(
           if (item.word === word) {
             return {
               ...item,
-              errorCount: Math.min((item.errorCount || 0) + 1, 1)
+              errorCount: Math.min((item.errorCount || 0) + 1, 1),
             };
           }
           return item;
         }),
       })),
-  })
+  }),
 );

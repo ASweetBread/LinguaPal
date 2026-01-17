@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -9,8 +9,8 @@ export class ConfigDAL {
     return await prisma.config.findUnique({
       where: { userId },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
   }
 
@@ -19,8 +19,8 @@ export class ConfigDAL {
     return await prisma.config.findUnique({
       where: { id },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
   }
 
@@ -37,26 +37,29 @@ export class ConfigDAL {
     return await prisma.config.create({
       data,
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
   }
 
   // 更新配置
-  static async updateConfig(userId: number, data: {
-    mode?: string;
-    aiTextService?: string;
-    aiAsrService?: string;
-    aiTtsService?: string;
-    dialogueNewWordRatio?: number;
-    dialogueFamiliarWordLevel?: number;
-  }) {
+  static async updateConfig(
+    userId: number,
+    data: {
+      mode?: string;
+      aiTextService?: string;
+      aiAsrService?: string;
+      aiTtsService?: string;
+      dialogueNewWordRatio?: number;
+      dialogueFamiliarWordLevel?: number;
+    },
+  ) {
     return await prisma.config.update({
       where: { userId },
       data,
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
   }
 
@@ -65,8 +68,8 @@ export class ConfigDAL {
     return await prisma.config.delete({
       where: { userId },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
   }
 
@@ -74,8 +77,8 @@ export class ConfigDAL {
   static async checkConfigExists(userId: number) {
     return await prisma.config.findFirst({
       where: {
-        userId
-      }
+        userId,
+      },
     });
   }
 }

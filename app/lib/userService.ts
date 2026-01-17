@@ -1,5 +1,5 @@
-import { getUserById, updateUser as updateUserApi } from './apiCalls';
-import { UserConfigState } from '@/app/store/userConfigStore';
+import { getUserById, updateUser as updateUserApi } from "./apiCalls";
+import { UserConfigState } from "@/app/store/userConfigStore";
 
 /**
  * 用户服务类，封装用户信息相关的API调用
@@ -16,10 +16,10 @@ export class UserService {
       if (response.success && response.data) {
         return response.data;
       } else {
-        throw new Error(response.error || '获取用户信息失败');
+        throw new Error(response.error || "获取用户信息失败");
       }
     } catch (error) {
-      console.error('获取用户信息失败:', error);
+      console.error("获取用户信息失败:", error);
       throw error;
     }
   }
@@ -31,7 +31,7 @@ export class UserService {
    * @returns 更新后的用户信息
    */
   static async updateUser(
-    id: number, 
+    id: number,
     data: {
       username?: string;
       password?: string;
@@ -39,17 +39,17 @@ export class UserService {
       dailyGoal?: number;
       vocabularyAbility?: string;
       totalStudyMinutes?: number;
-    }
+    },
   ) {
     try {
       const response = await updateUserApi(id, data);
       if (response.success && response.data) {
         return response.data;
       } else {
-        throw new Error(response.error || '更新用户信息失败');
+        throw new Error(response.error || "更新用户信息失败");
       }
     } catch (error) {
-      console.error('更新用户信息失败:', error);
+      console.error("更新用户信息失败:", error);
       throw error;
     }
   }
@@ -61,8 +61,8 @@ export class UserService {
    */
   static mapUserToConfig(userData: any): Partial<UserConfigState> {
     return {
-      currentLevel: userData.currentLevel || 'A1',
-      vocabularyAbility: userData.vocabularyAbility || '初级学习者'
+      currentLevel: userData.currentLevel || "A1",
+      vocabularyAbility: userData.vocabularyAbility || "初级学习者",
     };
   }
 
@@ -73,12 +73,12 @@ export class UserService {
    */
   static mapUserInfo(userData: any) {
     return {
-      userId: userData.id?.toString() || '',
+      userId: userData.id?.toString() || "",
       username: userData.username,
       currentLevel: userData.currentLevel,
       lastLoginAt: userData.lastLoginAt ? new Date(userData.lastLoginAt) : undefined,
       totalStudyMinutes: userData.totalStudyMinutes,
-      vocabularyAbility: userData.vocabularyAbility
+      vocabularyAbility: userData.vocabularyAbility,
     };
   }
 }

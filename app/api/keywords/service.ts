@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { KeywordData } from '@/app/store/keyWordStore';
+import { PrismaClient } from "@prisma/client";
+import { KeywordData } from "@/app/store/keyWordStore";
 
 const prisma = new PrismaClient();
 
@@ -25,26 +25,24 @@ export class KeywordsService {
           keywordScopes: true,
         },
         orderBy: {
-          id: 'desc',
+          id: "desc",
         },
       });
 
       // 转换为客户端需要的数据格式
       const formattedKeywords: KeywordData[] = keywords.map((keyword) => {
         // 提取关键字范围
-        const alreadyTrainedScope = keyword.keywordScopes
-          ?.map((scope) => scope.scope)
-          .filter(Boolean) || [];
+        const alreadyTrainedScope = keyword.keywordScopes?.map((scope) => scope.scope).filter(Boolean) || [];
 
         return {
           id: keyword.id.toString(),
           keyword: keyword.name,
           analysis: {
-            coreRequirements: keyword.coreRequirements || '',
-            difficultyLevel: keyword.difficultyLevel || '',
-            supplements: keyword.supplements || '',
-            vocabularyScope: keyword.vocabularyScope || '',
-            keySentencePatterns: keyword.keySentencePatterns || '',
+            coreRequirements: keyword.coreRequirements || "",
+            difficultyLevel: keyword.difficultyLevel || "",
+            supplements: keyword.supplements || "",
+            vocabularyScope: keyword.vocabularyScope || "",
+            keySentencePatterns: keyword.keySentencePatterns || "",
           },
           alreadyTrainedScope,
           alreadyTrainedScopeIndex: keyword.keywordScopesIndex || 0,
@@ -55,8 +53,8 @@ export class KeywordsService {
         keywords: formattedKeywords,
       };
     } catch (error) {
-      console.error('获取用户关键字列表失败:', error);
-      throw new Error('获取用户关键字列表失败');
+      console.error("获取用户关键字列表失败:", error);
+      throw new Error("获取用户关键字列表失败");
     }
   }
 
@@ -71,9 +69,9 @@ export class KeywordsService {
       const existingKeyword = await prisma.keyword.findUnique({
         where: { id },
       });
-      
+
       if (!existingKeyword) {
-        throw new Error('关键字不存在');
+        throw new Error("关键字不存在");
       }
 
       // 删除关键字（关联的KeywordScope会通过级联删除自动删除）
@@ -81,7 +79,7 @@ export class KeywordsService {
         where: { id },
       });
     } catch (error) {
-      console.error('删除关键字失败:', error);
+      console.error("删除关键字失败:", error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
-'use client';
-import NavBar from './components/NavBar';
-import MainContent from './components/MainContent';
+"use client";
+import NavBar from "./components/NavBar";
+import MainContent from "./components/MainContent";
 
 // 定义底部状态栏组件
 function BottomStatusBar() {

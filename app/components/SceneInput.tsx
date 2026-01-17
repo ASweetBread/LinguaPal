@@ -1,53 +1,82 @@
-'use client'
-import React, { useState, useRef } from 'react'
-import { Trash2 } from 'lucide-react'
-import { useDialogueStore, useUserConfigStore, useUserInfoStore, useVocabularyStore, useKeywordStore } from '@/app/store'
-import { generateDialogue, analyzeKeyword as analyzeKeywordApi, storeKeywordAnalysisResult } from '@/app/lib/dialogueApi';
-import { updateKeywordScope } from '@/app/lib/keywordScopeApi';
-import { deleteKeyword } from '@/app/lib/keywordsApi';
-import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from '../lib/prompts/generatePrompt';
-import PromptDisplay from './PromptDisplay';
-import { LEARNING_MODES } from '@/config/app';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+"use client";
+import React, { useState, useRef } from "react";
+import { Trash2 } from "lucide-react";
+import {
+  useDialogueStore,
+  useUserConfigStore,
+  useUserInfoStore,
+  useVocabularyStore,
+  useKeywordStore,
+} from "@/app/store";
+import {
+  generateDialogue,
+  analyzeKeyword as analyzeKeywordApi,
+  storeKeywordAnalysisResult,
+} from "@/app/lib/dialogueApi";
+import { updateKeywordScope } from "@/app/lib/keywordScopeApi";
+import { deleteKeyword } from "@/app/lib/keywordsApi";
+import { generateDialoguePrompt, generateAnalysisKeywordPrompt } from "../lib/prompts/generatePrompt";
+import PromptDisplay from "./PromptDisplay";
+import { LEARNING_MODES } from "@/config/app";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function SceneInput() {
-  const [showPrompt, setShowPrompt] = useState(false)
-  const [generatedPrompt, setGeneratedPrompt] = useState('')
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [showKeywordPrompt, setShowKeywordPrompt] = useState(false)
-  const [keywordAnalysisPrompt, setKeywordAnalysisPrompt] = useState('')
-  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename, currentScene, setCurrentScene } = useDialogueStore()
-  const { mode, aiServices, dialogueConfig } = useUserConfigStore()
-  const { userId, currentLevel, vocabularyAbility, } = useUserInfoStore()
-  const { vocabulary } = useVocabularyStore()
-  const { currentKeyword, keywordList, setCurrentKeyword, addKeywordToList, setIsAnalyzing: setKeywordStoreAnalyzing, updateKeywordTrainedScope, deleteKeyword: deleteKeywordFromStore } = useKeywordStore()
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showKeywordPrompt, setShowKeywordPrompt] = useState(false);
+  const [keywordAnalysisPrompt, setKeywordAnalysisPrompt] = useState("");
+  const { setDialogue, setIsLoading, isLoading, setDialogueAndVocabulary, setRolename, currentScene, setCurrentScene } =
+    useDialogueStore();
+  const { mode, aiServices, dialogueConfig } = useUserConfigStore();
+  const { userId, currentLevel, vocabularyAbility } = useUserInfoStore();
+  const { vocabulary } = useVocabularyStore();
+  const {
+    currentKeyword,
+    keywordList,
+    setCurrentKeyword,
+    addKeywordToList,
+    setIsAnalyzing: setKeywordStoreAnalyzing,
+    updateKeywordTrainedScope,
+    deleteKeyword: deleteKeywordFromStore,
+  } = useKeywordStore();
 
   // 分析关键字
   const analyzeKeyword = async () => {
     if (!currentScene.trim()) {
-      alert('请输入场景描述')
-      return
+      alert("请输入场景描述");
+      return;
     }
 
     try {
-      setIsAnalyzing(true)
-      setKeywordStoreAnalyzing(true)
-      
+      setIsAnalyzing(true);
+      setKeywordStoreAnalyzing(true);
+
       if (mode === LEARNING_MODES.PROMPT) {
         // 提示词模式：直接生成分析提示词
-        const prompt = generateAnalysisKeywordPrompt(currentScene.trim())
-        setKeywordAnalysisPrompt(prompt)
-        setShowKeywordPrompt(true)
+        const prompt = generateAnalysisKeywordPrompt(currentScene.trim());
+        setKeywordAnalysisPrompt(prompt);
+        setShowKeywordPrompt(true);
       } else {
         // 正常模式：调用API分析关键字
         const result = await analyzeKeywordApi({
           keyword: currentScene.trim(),
           mode: LEARNING_MODES.NORMAL,
-          userId: userId || '',
-          aiService: aiServices.textAI
-        })
+          userId: userId || "",
+          aiService: aiServices.textAI,
+        });
 
         if (result.success) {
           // 存储到keywordStore
@@ -56,63 +85,63 @@ export default function SceneInput() {
             analysis: result.data.analysis,
             alreadyTrainedScope: [], // 初始化本次训练核心诉求范围为空数组
             alreadyTrainedScopeIndex: undefined, // 初始化已训练范围索引为0
-          }
-          setCurrentKeyword(keywordData)
-          addKeywordToList(keywordData)
-          
+          };
+          setCurrentKeyword(keywordData);
+          addKeywordToList(keywordData);
+
           // 继续生成对话
-          generateDialogueAfterAnalysis()
+          generateDialogueAfterAnalysis();
         } else {
-          throw new Error(result.error || '分析关键字失败')
+          throw new Error(result.error || "分析关键字失败");
         }
       }
     } catch (error) {
-      console.error('分析关键字时出错:', error)
-      alert('分析关键字失败，请稍后重试')
+      console.error("分析关键字时出错:", error);
+      alert("分析关键字失败，请稍后重试");
     } finally {
-      setIsAnalyzing(false)
-      setKeywordStoreAnalyzing(false)
+      setIsAnalyzing(false);
+      setKeywordStoreAnalyzing(false);
     }
-  }
+  };
 
   // 生成对话（在关键字分析完成后调用）
   const generateDialogueAfterAnalysis = async () => {
     try {
-      setIsLoading(true)
+      setIsLoading(true);
       // 生成新对话前清空现有对话
-      setDialogue([])
-      
+      setDialogue([]);
+
       if (mode === LEARNING_MODES.PROMPT) {
         // 提示词模式：直接在客户端生成提示词
-        const vocabularyJson = JSON.stringify(vocabulary)
-        
+        const vocabularyJson = JSON.stringify(vocabulary);
+
         // 从keywordStore获取当前关键字分析结果和已训练范围信息
         const { currentKeyword } = useKeywordStore.getState();
-        console.log('currentKeyword:', currentKeyword)
+        console.log("currentKeyword:", currentKeyword);
         const keywordAnalysis = currentKeyword.analysis;
         const { alreadyTrainedScope, alreadyTrainedScopeIndex } = currentKeyword;
-        
+
         const prompt = generateDialoguePrompt(
           currentScene.trim(),
           dialogueConfig.newWordRatio.toString(),
           dialogueConfig.familiarWordLevel,
-          currentLevel || '',
-          vocabularyAbility || '',
+          currentLevel || "",
+          vocabularyAbility || "",
           vocabularyJson,
           // 新增参数
-          '中文', // userLanguage
+          "中文", // userLanguage
           keywordAnalysis, // 传递关键字分析结果
           JSON.stringify(alreadyTrainedScope), // 传递已训练范围
-          alreadyTrainedScopeIndex // 传递已训练范围索引
-        )
-        setGeneratedPrompt(prompt)
-        setShowPrompt(true)
+          alreadyTrainedScopeIndex, // 传递已训练范围索引
+        );
+        setGeneratedPrompt(prompt);
+        setShowPrompt(true);
       } else {
         // 正常模式：调用后端API生成对话
         // 从keywordStore获取当前关键字和已训练范围信息
         const { currentKeyword } = useKeywordStore.getState();
         const { alreadyTrainedScope, alreadyTrainedScopeIndex } = currentKeyword;
-        
+
         const result = await generateDialogue({
           scene: currentScene.trim(),
           mode,
@@ -122,12 +151,12 @@ export default function SceneInput() {
           currentLevel,
           vocabularyAbility,
           alreadyTrainedScope,
-          alreadyTrainedScopeIndex
+          alreadyTrainedScopeIndex,
         });
         const data = result;
 
-        console.log('生成的结果:', data)
-        
+        console.log("生成的结果:", data);
+
         // 正常模式：设置对话和词汇表
         if (data.dialogue) {
           // 转换新的JSON格式为旧的格式
@@ -136,24 +165,24 @@ export default function SceneInput() {
             if (item.scentence && item.scentence.length > 0) {
               return item.scentence.map((sentence: any) => ({
                 role: item.role,
-                text: sentence.text || '',
-                text_cn: sentence.text_cn || ''
-              }))
+                text: sentence.text || "",
+                text_cn: sentence.text_cn || "",
+              }));
             }
             // 如果没有scentence数组，返回一个空数组
-            return []
-          })
-          
+            return [];
+          });
+
           setDialogueAndVocabulary({
             dialogue: transformedDialogue,
-            vocabulary: data.vocabulary || []
-          })
-          setRolename(data.rolename)
-          
+            vocabulary: data.vocabulary || [],
+          });
+          setRolename(data.rolename);
+
           // 处理API返回的已训练范围和全训练状态
           const alreadyTrainedScope = data.alreadyTrainedScope;
           const isFullTrained = data.isFullTrained;
-          
+
           // 如果有用户ID和已训练范围信息，存储到数据库
           if (userId && alreadyTrainedScope !== undefined) {
             try {
@@ -161,9 +190,9 @@ export default function SceneInput() {
                 userId: parseInt(userId),
                 keywordName: currentScene.trim(),
                 alreadyTrainedScope,
-                isFullTrained: isFullTrained || false
-              })
-              
+                isFullTrained: isFullTrained || false,
+              });
+
               // 根据isFullTrained状态更新keyWordStore
               if (currentKeyword.id) {
                 if (isFullTrained) {
@@ -172,13 +201,13 @@ export default function SceneInput() {
                   // 如果不是全训练状态，保留当前索引或递增
                   const currentIndex = currentKeyword.alreadyTrainedScopeIndex;
                   updateKeywordTrainedScope(
-                    currentKeyword.id, 
-                    alreadyTrainedScope, 
-                    currentIndex !== undefined && currentIndex !== null ? currentIndex + 1 : 0
+                    currentKeyword.id,
+                    alreadyTrainedScope,
+                    currentIndex !== undefined && currentIndex !== null ? currentIndex + 1 : 0,
                   );
                 }
               }
-              
+
               // 更新已训练范围数组
               if (alreadyTrainedScope && currentKeyword.id) {
                 // 确保alreadyTrainedScope是一个数组
@@ -186,18 +215,18 @@ export default function SceneInput() {
                 updateKeywordTrainedScope(currentKeyword.id, scopeArray, currentKeyword.alreadyTrainedScopeIndex);
               }
             } catch (error) {
-              console.error('存储关键字范围时出错:', error);
+              console.error("存储关键字范围时出错:", error);
             }
           }
         }
       }
     } catch (error) {
-      console.error('生成对话时出错:', error)
-      alert('生成对话失败，请稍后重试')
+      console.error("生成对话时出错:", error);
+      alert("生成对话失败，请稍后重试");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   // 处理点击关键字的事件
   const handleKeywordSelect = (keyword: any) => {
@@ -213,99 +242,99 @@ export default function SceneInput() {
   const handleKeywordAnalysisSubmit = async (result: string) => {
     try {
       // 解析用户输入的分析结果
-      const analysis = JSON.parse(result.trim())
-      
+      const analysis = JSON.parse(result.trim());
+
       // 构建关键字数据
       const keywordData = {
         keyword: currentScene.trim(),
         analysis: {
-          coreRequirements: analysis.coreRequirements || '',
-          difficultyLevel: analysis.difficultyLevel || '',
-          supplements: analysis.supplements || analysis.supplementFocus || '',
-          vocabularyScope: analysis.vocabularyScope || analysis.vocabularyRange || '',
-          keySentencePatterns: analysis.keySentencePatterns || analysis.sentenceStructureFocus || ''
+          coreRequirements: analysis.coreRequirements || "",
+          difficultyLevel: analysis.difficultyLevel || "",
+          supplements: analysis.supplements || analysis.supplementFocus || "",
+          vocabularyScope: analysis.vocabularyScope || analysis.vocabularyRange || "",
+          keySentencePatterns: analysis.keySentencePatterns || analysis.sentenceStructureFocus || "",
         },
         alreadyTrainedScope: [], // 初始化本次训练核心诉求范围为空数组
         alreadyTrainedScopeIndex: undefined, // 初始化已训练范围索引为0
-      }
-      
+      };
+
       // 存储到keywordStore
-      setCurrentKeyword(keywordData)
-      addKeywordToList(keywordData)
-      
+      setCurrentKeyword(keywordData);
+      addKeywordToList(keywordData);
+
       // 如果有用户ID，存储到数据库
       if (userId) {
         storeKeywordAnalysisResult({
           ...keywordData,
-          userId: userId
-        })
+          userId: userId,
+        });
       }
       // 关闭提示词展示组件
-      setShowKeywordPrompt(false)
-      
+      setShowKeywordPrompt(false);
+
       // 继续生成对话
-      generateDialogueAfterAnalysis()
+      generateDialogueAfterAnalysis();
     } catch (error) {
-      alert('分析结果格式不正确，请确保输入的是有效的JSON格式')
-      console.error('解析分析结果失败:', error)
+      alert("分析结果格式不正确，请确保输入的是有效的JSON格式");
+      console.error("解析分析结果失败:", error);
     }
-  }
+  };
 
   // 处理删除关键字
   const handleDeleteKeyword = async (keywordId: string) => {
     try {
       // 调用API删除关键字
       if (userId) {
-        await deleteKeyword(keywordId)
+        await deleteKeyword(keywordId);
       }
-      
+
       // 从keywordStore中删除
-      useKeywordStore.getState().deleteKeyword(keywordId)
+      useKeywordStore.getState().deleteKeyword(keywordId);
     } catch (error) {
-      console.error('删除关键字时出错:', error)
-      alert('删除关键字失败，请稍后重试')
+      console.error("删除关键字时出错:", error);
+      alert("删除关键字失败，请稍后重试");
     }
-  }
+  };
 
   // 处理生成对话
   const handleGenerateDialogue = async () => {
     // 先分析关键字
-    await analyzeKeyword()
-  }
+    await analyzeKeyword();
+  };
 
   const handlePromptSubmit = (result: string) => {
     // 处理分析结果的提交
     try {
       // 尝试解析用户输入的对话
-      const parsedDialogue = JSON.parse(result.trim())
-      
+      const parsedDialogue = JSON.parse(result.trim());
+
       // 转换新的JSON格式为旧的格式
       const transformedDialogue = parsedDialogue.dialogue.flatMap((item: any) => {
         // 从scentence数组中获取每个元素，展开成独立的对话对象
         if (item.scentence && item.scentence.length > 0) {
           return item.scentence.map((sentence: any) => ({
             role: item.role,
-            text: sentence.text || '',
-            text_cn: sentence.text_cn || ''
-          }))
+            text: sentence.text || "",
+            text_cn: sentence.text_cn || "",
+          }));
         }
         // 如果没有scentence数组，返回一个空数组
-        return []
-      })
-      
+        return [];
+      });
+
       setDialogueAndVocabulary({
         dialogue: transformedDialogue,
-        vocabulary: parsedDialogue.vocabulary || []
-      })
-      setRolename(parsedDialogue.rolename)
-      
+        vocabulary: parsedDialogue.vocabulary || [],
+      });
+      setRolename(parsedDialogue.rolename);
+
       // 关闭提示词展示组件
-      setShowPrompt(false)
+      setShowPrompt(false);
     } catch (error) {
-      alert('对话格式不正确，请确保输入的是有效的JSON格式')
-      console.error('解析对话失败:', error)
+      alert("对话格式不正确，请确保输入的是有效的JSON格式");
+      console.error("解析对话失败:", error);
     }
-  }
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto mb-8">
@@ -327,7 +356,7 @@ export default function SceneInput() {
           disabled={isLoading || isAnalyzing}
           className="px-4 py-2 bg-blue-600 text-white rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isAnalyzing ? '分析中...' : isLoading ? '生成中...' : '生成对话'}
+          {isAnalyzing ? "分析中..." : isLoading ? "生成中..." : "生成对话"}
         </button>
       </div>
 
@@ -337,18 +366,12 @@ export default function SceneInput() {
           <h3 className="text-sm font-medium text-gray-700 mb-2">历史关键字</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {keywordList.map((keyword) => (
-              <Card
-                key={keyword.id || keyword.keyword}
-                className="transition-all hover:shadow-md"
-              >
+              <Card key={keyword.id || keyword.keyword} className="transition-all hover:shadow-md">
                 <CardContent className="p-3 relative">
-                  <div 
-                    onClick={() => handleKeywordSelect(keyword)}
-                    className="cursor-pointer"
-                  >
+                  <div onClick={() => handleKeywordSelect(keyword)} className="cursor-pointer">
                     <div className="font-medium text-sm">{keyword.keyword}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      难度: {keyword.analysis.difficultyLevel || '未设置'}
+                      难度: {keyword.analysis.difficultyLevel || "未设置"}
                     </div>
                   </div>
                   {keyword.id && (
@@ -359,7 +382,7 @@ export default function SceneInput() {
                           size="icon"
                           className="absolute top-2 right-2 h-6 w-6 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                           onClick={(e) => {
-                            e.stopPropagation() // 阻止事件冒泡
+                            e.stopPropagation(); // 阻止事件冒泡
                           }}
                           aria-label="删除关键字"
                         >
@@ -369,13 +392,11 @@ export default function SceneInput() {
                       <AlertDialogContent className="sm:max-w-md">
                         <AlertDialogHeader>
                           <AlertDialogTitle>确认删除</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            确定要删除这个关键字吗？此操作不可撤销。
-                          </AlertDialogDescription>
+                          <AlertDialogDescription>确定要删除这个关键字吗？此操作不可撤销。</AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>取消</AlertDialogCancel>
-                          <AlertDialogAction 
+                          <AlertDialogAction
                             className="bg-red-600 hover:bg-red-700 text-white"
                             onClick={() => handleDeleteKeyword(keyword.id!)}
                           >
@@ -394,11 +415,7 @@ export default function SceneInput() {
 
       {/* 提示词展示组件 */}
       {showPrompt && (
-        <PromptDisplay
-          prompt={generatedPrompt}
-          onSubmit={handlePromptSubmit}
-          onClose={() => setShowPrompt(false)}
-        />
+        <PromptDisplay prompt={generatedPrompt} onSubmit={handlePromptSubmit} onClose={() => setShowPrompt(false)} />
       )}
 
       {/* 关键字分析提示词展示组件 */}
@@ -410,5 +427,5 @@ export default function SceneInput() {
         />
       )}
     </div>
-  )
+  );
 }

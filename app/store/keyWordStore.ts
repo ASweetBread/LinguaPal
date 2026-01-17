@@ -45,14 +45,14 @@ export const useKeywordStore = create<KeywordState>()(
   // ),
   (set) => ({
     currentKeyword: {
-      id: '',
-      keyword: '',
+      id: "",
+      keyword: "",
       analysis: {
-        coreRequirements: '',
-        difficultyLevel: '',
-        supplements: '',
-        vocabularyScope: '',
-        keySentencePatterns: ''
+        coreRequirements: "",
+        difficultyLevel: "",
+        supplements: "",
+        vocabularyScope: "",
+        keySentencePatterns: "",
       },
       alreadyTrainedScope: [], // 初始化本次训练核心诉求范围为空数组
       alreadyTrainedScopeIndex: undefined, // 初始化已训练范围索引为0
@@ -79,10 +79,13 @@ export const useKeywordStore = create<KeywordState>()(
           return item;
         }),
         // 如果更新的是当前关键字，同时更新currentKeyword
-        currentKeyword: state.currentKeyword.id === id ? {
-          ...state.currentKeyword,
-          ...updates,
-        } : state.currentKeyword,
+        currentKeyword:
+          state.currentKeyword.id === id
+            ? {
+                ...state.currentKeyword,
+                ...updates,
+              }
+            : state.currentKeyword,
       })),
     deleteKeyword: (id) =>
       set((state) => ({
@@ -92,14 +95,14 @@ export const useKeywordStore = create<KeywordState>()(
       set(() => ({
         keywordList: [],
         currentKeyword: {
-          id: '',
-          keyword: '',
+          id: "",
+          keyword: "",
           analysis: {
-            coreRequirements: '',
-            difficultyLevel: '',
-            supplements: '',
-            vocabularyScope: '',
-            keySentencePatterns: ''
+            coreRequirements: "",
+            difficultyLevel: "",
+            supplements: "",
+            vocabularyScope: "",
+            keySentencePatterns: "",
           },
           alreadyTrainedScope: [],
           alreadyTrainedScopeIndex: 0,
@@ -123,11 +126,14 @@ export const useKeywordStore = create<KeywordState>()(
           return item;
         }),
         // 如果更新的是当前关键字，同时更新currentKeyword
-        currentKeyword: state.currentKeyword.id === keywordId ? {
-          ...state.currentKeyword,
-          alreadyTrainedScope: scope,
-          alreadyTrainedScopeIndex: index,
-        } : state.currentKeyword,
+        currentKeyword:
+          state.currentKeyword.id === keywordId
+            ? {
+                ...state.currentKeyword,
+                alreadyTrainedScope: scope,
+                alreadyTrainedScopeIndex: index,
+              }
+            : state.currentKeyword,
       })),
-  })
+  }),
 );

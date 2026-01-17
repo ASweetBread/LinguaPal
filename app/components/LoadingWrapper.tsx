@@ -1,6 +1,6 @@
-'use client';
-import React, { ReactNode } from 'react';
-import { useAppConfigStore } from '@/app/store';
+"use client";
+import React, { ReactNode } from "react";
+import { useAppConfigStore } from "@/app/store";
 
 interface LoadingWrapperProps {
   children: ReactNode;
@@ -20,8 +20,8 @@ export default function LoadingWrapper({
   isLoading,
   error,
   onRetry,
-  loadingText = '加载中...',
-  errorTitle = '加载失败'
+  loadingText = "加载中...",
+  errorTitle = "加载失败",
 }: LoadingWrapperProps) {
   const { theme } = useAppConfigStore();
 
@@ -46,8 +46,8 @@ export default function LoadingWrapper({
           <div className="text-red-500 text-4xl mb-4">⚠️</div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{errorTitle}</h1>
           <p className="text-gray-600 dark:text-gray-300 mt-2">{error}</p>
-          <button 
-            onClick={onRetry} 
+          <button
+            onClick={onRetry}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             重试

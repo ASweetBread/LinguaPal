@@ -1,4 +1,4 @@
-import { KeywordAnalysisDAL } from '../analyze-keyword/dal';
+import { KeywordAnalysisDAL } from "../analyze-keyword/dal";
 
 // 定义请求参数接口
 export interface SaveKeywordAnalysisRequest {
@@ -35,7 +35,7 @@ export class SaveKeywordAnalysisService {
     if (!keyword || !userId || !analysis) {
       return {
         success: false,
-        error: '关键字、用户ID和分析结果不能为空'
+        error: "关键字、用户ID和分析结果不能为空",
       };
     }
 
@@ -43,21 +43,21 @@ export class SaveKeywordAnalysisService {
       const savedKeyword = await KeywordAnalysisDAL.saveAnalysis({
         keyword,
         analysis,
-        userId
+        userId,
       });
 
       return {
         success: true,
         data: {
-          id: savedKeyword.id?.toString() || '',
-          keyword: savedKeyword.name
-        }
+          id: savedKeyword.id?.toString() || "",
+          keyword: savedKeyword.name,
+        },
       };
     } catch (error) {
-      console.error('保存关键字分析结果失败:', error);
+      console.error("保存关键字分析结果失败:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : '保存关键字分析结果失败'
+        error: error instanceof Error ? error.message : "保存关键字分析结果失败",
       };
     }
   }

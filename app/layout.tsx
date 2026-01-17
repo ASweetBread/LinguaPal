@@ -1,35 +1,34 @@
-'use client'
-import type { Metadata } from 'next'
-import './globals.css'
-import './component.css'
-import { useEffect, useState } from 'react'
-import { useAppConfigStore, useUserConfigStore, useUserInfoStore, useKeywordStore } from '@/app/store'
-import { Toaster } from '@/components/ui/toaster'
-import LoadingWrapper from '@/app/components/LoadingWrapper'
-import { UserService } from '@/app/lib/userService'
-import { KeywordService } from '@/app/lib/keywordService'
-
+"use client";
+import type { Metadata } from "next";
+import "./globals.css";
+import "./component.css";
+import { useEffect, useState } from "react";
+import { useAppConfigStore, useUserConfigStore, useUserInfoStore, useKeywordStore } from "@/app/store";
+import { Toaster } from "@/components/ui/toaster";
+import LoadingWrapper from "@/app/components/LoadingWrapper";
+import { UserService } from "@/app/lib/userService";
+import { KeywordService } from "@/app/lib/keywordService";
 
 const metadata: Metadata = {
-  title: 'LinguaPal',
-  description: 'AI语言学习助手',
-}
+  title: "LinguaPal",
+  description: "AI语言学习助手",
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   const { theme, isLoading, error, setIsLoading, setError, resetError } = useAppConfigStore();
   const { setUserConfig } = useUserConfigStore();
   const { userId, setUserId, setUserInfo } = useUserInfoStore();
-  
+
   // 根据主题状态更新html的dark类
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
     }
   }, [theme]);
 
@@ -39,7 +38,7 @@ export default function RootLayout({
       resetError();
       setIsLoading(true);
 
-      let storedUserId = '1';
+      let storedUserId = "1";
       if (storedUserId) {
         // 获取用户信息
         const userData = await UserService.getUserInfo(parseInt(storedUserId));
@@ -47,7 +46,7 @@ export default function RootLayout({
         // setUserConfig(UserService.mapUserToConfig(userData));
         // 更新用户信息
         const userInfo = UserService.mapUserInfo(userData);
-        console.log('userInfo:', userInfo);
+        console.log("userInfo:", userInfo);
         // 存储所有用户信息到UserInfoStore
         setUserInfo(userInfo);
 
@@ -55,7 +54,7 @@ export default function RootLayout({
         try {
           const keywordsData = await KeywordService.getKeywords(parseInt(storedUserId));
           const keywords = KeywordService.mapKeywords(keywordsData);
-          
+
           if (Array.isArray(keywords)) {
             const { setCurrentKeyword, addKeywordToList, clearKeywords } = useKeywordStore.getState();
             // 清空现有关键字列表
@@ -64,18 +63,17 @@ export default function RootLayout({
             keywords.forEach((keyword) => {
               addKeywordToList(keyword);
             });
-            
           }
         } catch (keywordErr) {
-          console.error('获取用户关键字数据失败:', keywordErr);
+          console.error("获取用户关键字数据失败:", keywordErr);
           // 获取关键字数据失败不影响整体页面加载
         }
       }
-      
+
       setIsLoading(false);
     } catch (err) {
-      console.error('预加载用户信息失败:', err);
-      setError(err instanceof Error ? err.message : '获取用户信息失败');
+      console.error("预加载用户信息失败:", err);
+      setError(err instanceof Error ? err.message : "获取用户信息失败");
       setIsLoading(false);
     }
   };
@@ -91,7 +89,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="zh-CN" className={theme === 'dark' ? 'dark' : ''}>
+    <html lang="zh-CN" className={(theme === "dark" ? "dark" : "") + " overflow-hidden"}>
       <body>
         <LoadingWrapper
           isLoading={isLoading}
@@ -105,5 +103,5 @@ export default function RootLayout({
         <Toaster />
       </body>
     </html>
-  )
+  );
 }

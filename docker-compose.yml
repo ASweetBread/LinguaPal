@@ -1,17 +1,17 @@
-version: '3.8'
+version: "3.8"
 services:
   postgres:
-    image: postgres:15-alpine  # 使用轻量版PostgreSQL 15
+    image: postgres:15-alpine # 使用轻量版PostgreSQL 15
     container_name: vocabulary-db
-    restart: always  # 容器崩溃时自动重启
+    restart: always # 容器崩溃时自动重启
     ports:
-      - "5432:5432"  # 本地5432端口映射到容器5432端口
+      - "5432:5432" # 本地5432端口映射到容器5432端口
     environment:
-      POSTGRES_USER: vocabulary_user  # 数据库用户名
-      POSTGRES_PASSWORD: vocabulary123  # 数据库密码
-      POSTGRES_DB: vocabulary_db  # 默认创建的数据库
+      POSTGRES_USER: vocabulary_user # 数据库用户名
+      POSTGRES_PASSWORD: vocabulary123 # 数据库密码
+      POSTGRES_DB: vocabulary_db # 默认创建的数据库
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # 持久化数据
+      - postgres_data:/var/lib/postgresql/data # 持久化数据
       # - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # 初始化脚本（可选）
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vocabulary_user"]
@@ -20,4 +20,4 @@ services:
       retries: 3
 
 volumes:
-  postgres_data:  # 数据卷，删除容器时数据不会丢失
+  postgres_data: # 数据卷，删除容器时数据不会丢失

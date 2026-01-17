@@ -1,8 +1,8 @@
-'use client'
-import React from 'react';
-import { useUserConfigStore } from '../store';
-import NavBar from '../components/NavBar';
-import { LEARNING_MODES, LearningMode } from '@/config/app';
+"use client";
+import React from "react";
+import { useUserConfigStore } from "../store";
+import NavBar from "../components/NavBar";
+import { LEARNING_MODES, LearningMode } from "@/config/app";
 
 // 定义底部状态栏组件
 function BottomStatusBar() {
@@ -22,7 +22,7 @@ const SettingsPage = () => {
   };
 
   // 更新AI服务
-  const handleAIServiceChange = (serviceType: 'textAI' | 'asrService' | 'ttsService', serviceValue: string) => {
+  const handleAIServiceChange = (serviceType: "textAI" | "asrService" | "ttsService", serviceValue: string) => {
     updateAIServices({ [serviceType]: serviceValue as any });
   };
 
@@ -32,7 +32,7 @@ const SettingsPage = () => {
       <div className="flex-1 bg-gray-50 dark:bg-gray-900 p-4">
         <div className="max-w-2xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">个人配置</h1>
-          
+
           {/* 模式选择 */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">学习模式</h2>
@@ -64,19 +64,17 @@ const SettingsPage = () => {
               正常模式：直接调用AI生成对话；提示词模式：生成提示词供您在其他AI平台使用
             </p>
           </div>
-          
+
           {/* AI服务配置 */}
           <div className="mb-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">AI服务配置</h2>
-            
+
             {/* 文本对话AI */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                文本对话AI服务
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">文本对话AI服务</label>
               <select
                 value={aiServices.textAI}
-                onChange={(e) => handleAIServiceChange('textAI', e.target.value)}
+                onChange={(e) => handleAIServiceChange("textAI", e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="zhipu">智谱AI</option>
@@ -84,7 +82,7 @@ const SettingsPage = () => {
                 <option value="other">其他服务</option>
               </select>
             </div>
-            
+
             {/* ASR服务 */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -92,7 +90,7 @@ const SettingsPage = () => {
               </label>
               <select
                 value={aiServices.asrService}
-                onChange={(e) => handleAIServiceChange('asrService', e.target.value)}
+                onChange={(e) => handleAIServiceChange("asrService", e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="whisper">OpenAI Whisper</option>
@@ -100,7 +98,7 @@ const SettingsPage = () => {
                 <option value="tencent">腾讯云ASR</option>
               </select>
             </div>
-            
+
             {/* TTS服务 */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -108,7 +106,7 @@ const SettingsPage = () => {
               </label>
               <select
                 value={aiServices.ttsService}
-                onChange={(e) => handleAIServiceChange('ttsService', e.target.value)}
+                onChange={(e) => handleAIServiceChange("ttsService", e.target.value)}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="browser">浏览器内置</option>

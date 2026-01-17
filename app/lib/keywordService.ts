@@ -1,5 +1,5 @@
-import { getKeywordsByUserId } from './apiCalls';
-import { KeywordData } from '@/app/store/keyWordStore';
+import { getKeywordsByUserId } from "./apiCalls";
+import { KeywordData } from "@/app/store/keyWordStore";
 
 /**
  * 关键字服务类，封装关键字相关的API调用
@@ -16,10 +16,10 @@ export class KeywordService {
       if (response.success && response.data) {
         return response.data;
       } else {
-        throw new Error(response.error || '获取用户关键字列表失败');
+        throw new Error(response.error || "获取用户关键字列表失败");
       }
     } catch (error) {
-      console.error('获取用户关键字列表失败:', error);
+      console.error("获取用户关键字列表失败:", error);
       throw error;
     }
   }
@@ -31,17 +31,17 @@ export class KeywordService {
    */
   static mapKeywords(keywordsData: any[]): KeywordData[] {
     return keywordsData.map((keyword) => ({
-      id: keyword.id?.toString() || '',
+      id: keyword.id?.toString() || "",
       keyword: keyword.keyword,
       analysis: keyword.analysis || {
-        coreRequirements: '',
-        difficultyLevel: '',
-        supplements: '',
-        vocabularyScope: '',
-        keySentencePatterns: ''
+        coreRequirements: "",
+        difficultyLevel: "",
+        supplements: "",
+        vocabularyScope: "",
+        keySentencePatterns: "",
       },
       alreadyTrainedScope: keyword.alreadyTrainedScope || [],
-      alreadyTrainedScopeIndex: keyword.alreadyTrainedScopeIndex || 0
+      alreadyTrainedScopeIndex: keyword.alreadyTrainedScopeIndex || 0,
     }));
   }
 }

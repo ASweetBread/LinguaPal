@@ -25,12 +25,12 @@ export interface UserInfoState {
 export const useUserInfoStore = create<UserInfoState>()(
   persist(
     (set) => ({
-      userId: '',
+      userId: "",
       username: undefined,
-      currentLevel: '',
+      currentLevel: "",
       lastLoginAt: undefined,
       totalStudyMinutes: undefined,
-      vocabularyAbility: '',
+      vocabularyAbility: "",
       updateUserId: (id) =>
         set(() => ({
           userId: id,
@@ -46,7 +46,7 @@ export const useUserInfoStore = create<UserInfoState>()(
         })),
       clearUserInfo: () =>
         set(() => ({
-          userId: '',
+          userId: "",
           username: undefined,
           currentLevel: undefined,
           lastLoginAt: undefined,

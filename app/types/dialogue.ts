@@ -1,28 +1,28 @@
 // Shared types for dialogue feature (used by server and client)
 export interface DialogueItem {
   // 角色标识，例如 'A' 或 'B'
-  role: string
+  role: string;
   // 英文文本
-  text: string
+  text: string;
   // 中文翻译文本
-  text_cn: string
+  text_cn: string;
 }
 
 export interface VocabularyItem {
-  id: number | null
-  word: string
-  phonetic?: string
-  meanings: string
-  partOfSpeech?: string
-  phrase?: string
-  phraseMeaning?: string
-  errorCount?: number
-  totalPracticeCount?: number
+  id: number | null;
+  word: string;
+  phonetic?: string;
+  meanings: string;
+  partOfSpeech?: string;
+  phrase?: string;
+  phraseMeaning?: string;
+  errorCount?: number;
+  totalPracticeCount?: number;
 }
 
 export interface GenerateDialogueResponse {
-  dialogue: DialogueItem[]
-  vocabulary: VocabularyItem[]
+  dialogue: DialogueItem[];
+  vocabulary: VocabularyItem[];
 }
 
 // 说明：服务端应该返回一个符合 GenerateDialogueResponse 的 JSON 对象。

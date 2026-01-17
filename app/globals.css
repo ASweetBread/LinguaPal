@@ -120,27 +120,27 @@
   body {
     @apply bg-background text-foreground;
   }
-  
+
   /* Scrollbar styles */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
-  
+
   ::-webkit-scrollbar-track {
     background: oklch(var(--secondary));
     border-radius: 4px;
   }
-  
+
   ::-webkit-scrollbar-thumb {
     background: oklch(var(--muted-foreground));
     border-radius: 4px;
   }
-  
+
   ::-webkit-scrollbar-thumb:hover {
     background: oklch(var(--foreground));
   }
-  
+
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
